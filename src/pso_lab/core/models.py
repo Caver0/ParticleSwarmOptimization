@@ -13,8 +13,8 @@ class Particle:
     best_value: float
 
 @dataclass(slots=True)
-class SwarnState:
-    """Represents the state of the swarn"""
+class SwarmState:
+    """Represents the state of the swarm"""
     
     positions: np.ndarray
     velocities: np.ndarray
