@@ -25,3 +25,12 @@ class SwarmState:
     global_best_position: np.ndarray
     global_best_value: float
     
+@dataclass(slots = True)
+class OptimizationResult:
+    """Stores the result of a PSO optimization run."""
+
+    best_position: np.ndarray
+    best_value: float
+    iterations_completed: int
+    best_value_history: list[float]
+

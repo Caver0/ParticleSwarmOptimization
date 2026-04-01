@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 
+from pso_lab.core.boundaries import apply_clamp_bounds
 from pso_lab.core.config import PSOConfig
-from pso_lab.core.models import SwarmState
+from pso_lab.core.models import SwarmState, OptimizationResult
 from pso_lab.objectives import ObjectiveFunction
 
 class PSOOptimizer:
@@ -12,9 +13,11 @@ class PSOOptimizer:
     def __init__(self, config: PSOConfig, objective_function: ObjectiveFunction):
         self.config = config
         self.objective_function = objective_function
-
-        if config.seed is not None:
-            np.random.seed(config.seed)
+        self.rng = np.random.default_rng(config.seed)
+        
+        bounds = np.asarray(self.objective_function, dtype=float)
+        self.lower_bounds = bounds[:, 0]
+        self.upper_bounds = bounds[:, 1]
         
     def _initialize_swarm(self)-> SwarmState:
         n = self.config.num_particles
@@ -23,8 +26,12 @@ class PSOOptimizer:
         bounds = np.array(self.objective_function.bounds)
         lower = bounds[:, 0]
         upper = bounds[:, 1]
-        positions = np.random.uniform(lower, upper, (n, d))
-        velocities = np.zeros((n, d))
+        positions = self.rng.uniform(
+            self.lower_bounds,
+            self.upper_bounds,
+            size = (n, d),
+        )
+        velocities = np.zeros((n, d), dtype=float)
         
         values = self.objective_function.evaluate_many(positions)
 
@@ -34,7 +41,7 @@ class PSOOptimizer:
         best_idx = np.argmin(values)
 
         global_best_position = positions[best_idx].copy()
-        global_best_value = values[best_idx]
+        global_best_value = float(values[best_idx])
 
         return SwarmState(
             positions=positions,    
@@ -42,7 +49,7 @@ class PSOOptimizer:
             personal_best_positions=personal_best_positions,
             personal_best_values=personal_best_values,
             global_best_position=global_best_position,
-            global_best_value=global_best_value
+            global_best_value=global_best_value,
         )
     
     def _update_velocity(self, state: SwarmState) -> None:
@@ -58,33 +65,61 @@ class PSOOptimizer:
         state.velocities = w * state.velocities + cognitive + social
 
     def _update_position(self, state: SwarmState) -> None:
-        state.positions += state.velocities
-
-        bounds = np.array(self.objective_function.bounds)
-        lower = bounds[:, 0]
-        upper = bounds[:, 1]
-
-        state.positions = np.clip(state.positions, lower, upper)
-
-    def _update_best(self, state: SwarmState, values: np.ndarray) -> None:
+        state.positions = state.positions + state.velocities
+        state.positions = apply_clamp_bounds(
+            state.positions,
+            self.lower_bounds,
+            self.upper_bounds,
+        )
+    
+    def _update_best(self, state: SwarmState, values: np.ndarray) -> bool:
         improved = values < state.personal_best_values
 
         state.personal_best_positions[improved] = state.positions[improved]
         state.personal_best_values[improved] = values[improved]
 
+        previous_global_best = state.global_best_value
+
         best_idx = np.argmin(state.personal_best_values)
-
         state.global_best_position = state.personal_best_positions[best_idx].copy()
-        state.global_best_value = state.personal_best_values[best_idx]
+        state.global_best_value = float(state.personal_best_values[best_idx])
     
-    def optimize(self) -> tuple[np.ndarray, float]:
+    def optimize(self) -> OptimizationResult:
         state = self._initialize_swarm()
+        best_value_history: list[float] = []
+        iterations_without_improvement = 0
 
-        for _ in range(self.config.max_iterations):
+        for iteration in range(self.config.max_iterations):
             self._update_velocity(state)
             self._update_position(state)
-
+            
             values = self.objective_function.evaluate_many(state.positions)
-            self._update_best(state, values)
+            global_improved = self._update_best(state, values)
 
-        return state.global_best_position, state.global_best_value
+            if self.config.track_history:
+                best_value_history.append(state.global_best_value)
+            
+            if global_improved:
+                iterations_without_improvement = 0
+            else: iterations_without_improvement += 1
+
+            if self.config.tolerance > 0.0 and state.global_best_value <= self.config.tolerance:
+                return OptimizationResult(
+                    best_position=state.global_best_position.copy(),
+                    best_value=float(state.global_best_value),
+                    iterations_completed= iteration + 1,
+                    best_value_history=best_value_history,
+                )
+            if(self.config.stagnation_patience is not None and iterations_without_improvement >= self.config.stagnation_patience):
+                return OptimizationResult(
+                    best_position=state.global_best_position.copy(),
+                    best_value=float(state.global_best_value),
+                    iterations_completed=iteration+1,
+                    best_value_history=best_value_history,
+                )
+        return OptimizationResult(
+            best_position=state.global_best_position.copy(),
+            best_value=float(state.global_best_value),
+            iterations_completed=self.config.max_iterations,
+            best_value_history=best_value_history,
+        )

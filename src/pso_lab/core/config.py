@@ -14,4 +14,7 @@ class PSOConfig:
 
     seed: int | None = None
 
+    tolerance: float = 0.0
+    stagnation_patience: int | None = None
+    track_history: bool = True
     
