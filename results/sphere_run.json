@@ -1,0 +1,16 @@
+{
+    "objective": "sphere",
+    "best_value": 1.284207963932366e-13,
+    "best_position": [
+        1.3421906211694013e-07,
+        3.3227404315968704e-07
+    ],
+    "config": {
+        "num_particles": 30,
+        "dimensions": 2,
+        "max_iterations": 100,
+        "cognitive_coefficient": 1.5,
+        "social_coefficient": 1.5,
+        "seed": 42
+    }
+}

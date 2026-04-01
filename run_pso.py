@@ -3,7 +3,7 @@ from __future__ import annotations
 from pso_lab.core.config import PSOConfig
 from pso_lab.core.optimizer import PSOOptimizer
 from pso_lab.objectives import build_objective
-
+from pso_lab.io.results import save_result
 
 def main() -> None:
     config = PSOConfig(
@@ -22,10 +22,19 @@ def main() -> None:
 
     best_position, best_value = optimizer.optimize()
 
+    save_result(
+        output_path = "results/sphere_run.json",
+        best_position = best_position,
+        best_value = best_value,
+        config = config,
+        objective_name = objective.name,
+    )
+
     print("Optimization finished")
     print(f"Objective: {objective.name}")
     print(f"Best position: {best_position}")
     print(f"Best value: {best_value}")
+
 
 
 if __name__ == "__main__":
