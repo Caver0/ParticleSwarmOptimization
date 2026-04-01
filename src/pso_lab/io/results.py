@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import numpy as np
 from pso_lab.core.config import PSOConfig
-
+from pso_lab.experiments.summary import ExperimentSummary
 
 def save_result(
         output_path: str|Path,
@@ -31,4 +31,22 @@ def save_result(
 
     with open(output_path, "w", encoding = "utf-8") as f:
         json.dump(result, f, indent = 4)
-        
+
+
+def save_summarry(output_path: str|Path, summmary: ExperimentSummary) -> None:
+    """Save benchmark summary statistics to a JSON file."""
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    data = {
+        "objective": summmary.objective_name,
+        "num_runs": summmary.num_runs,
+        "mean_best_value": summmary.mean_best_value,
+        "std_best_value": summmary.std_best_value,
+        "min_best_value": summmary.min_best_value,
+        "max_best_value": summmary.max_best_value,
+    }
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)

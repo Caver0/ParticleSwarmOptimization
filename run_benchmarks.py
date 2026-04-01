@@ -1,6 +1,7 @@
 from pso_lab.core.config import PSOConfig
 from pso_lab.experiments.runner import run_single_experiment
 from pso_lab.experiments.summary import summarize_experiments
+from pso_lab.io.results import save_summarry
 
 def main() -> None:
     objective_name = "sphere"
@@ -27,6 +28,7 @@ def main() -> None:
         )
     summary = summarize_experiments(results)
 
+
     print("\nBenchmark summary:")
     print(f"Objective: {summary.objective_name}")
     print(f"Runs: {summary.num_runs}")
@@ -34,6 +36,11 @@ def main() -> None:
     print(f"Std best value: {summary.std_best_value:.6e}")
     print(f"Min best value: {summary.min_best_value:.6e}")
     print(f"Max best value: {summary.max_best_value:.6e}")
+
+    save_summarry(
+        output_path=f"results/{objective_name}_benchmark_summary.json",
+        summmary=summary,
+    )
 
 
 if __name__ == "__main__":
