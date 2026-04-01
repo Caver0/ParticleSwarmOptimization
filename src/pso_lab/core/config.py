@@ -10,7 +10,7 @@ class PSOConfig:
 
     inertia_weight: float
     cognitive_coefficient: float
-    social_coefficent: float
+    social_coefficient: float
 
     seed: int | None = None
 

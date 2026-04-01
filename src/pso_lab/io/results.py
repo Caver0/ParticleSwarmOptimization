@@ -24,7 +24,7 @@ def save_result(
             "dimensions": config.dimensions,
             "max_iterations": config.max_iterations,
             "cognitive_coefficient":config.cognitive_coefficient,
-            "social_coefficient" : config.social_coefficent,
+            "social_coefficient" : config.social_coefficient,
             "seed" : config.seed,
         },
     }
@@ -33,7 +33,7 @@ def save_result(
         json.dump(result, f, indent = 4)
 
 
-def save_summarry(output_path: str|Path, summmary: ExperimentSummary) -> None:
+def summmary(output_path: str|Path, summmary: ExperimentSummary) -> None:
     """Save benchmark summary statistics to a JSON file."""
 
     output_path = Path(output_path)

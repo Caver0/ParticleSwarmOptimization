@@ -1,12 +1,12 @@
 from pso_lab.core.config import PSOConfig
 from pso_lab.experiments.runner import run_single_experiment
 from pso_lab.experiments.summary import summarize_experiments
-from pso_lab.io.results import save_summarry
+from pso_lab.io.results import summmary
 from tabulate import tabulate
 
 def main() -> None: 
     all_summaries =[]
-    objectives = ["sphere", "rosenbrok", "rastrigin", "ackley"]
+    objectives = ["sphere", "rosenbrock", "rastrigin", "ackley"]
     seeds = [0, 1, 2, 3, 4]
     for objective_name in objectives:
         print(f"\nRunning benchmarks for: {objective_name}")
@@ -18,7 +18,7 @@ def main() -> None:
                 max_iterations=100,
                 inertia_weight=0.7, 
                 cognitive_coefficient=1.5,
-                social_coefficent=1.5,
+                social_coefficient=1.5,
                 seed=seed,
             )
 
@@ -30,7 +30,7 @@ def main() -> None:
             )
         summary = summarize_experiments(results)
         all_summaries.append(summary)
-        save_summarry(
+        summmary(
             output_path=f"results/{objective_name}_benchmark_summary.json",
             summmary=summary,
         )

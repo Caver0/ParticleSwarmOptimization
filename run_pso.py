@@ -12,7 +12,7 @@ def main() -> None:
         max_iterations=100,
         inertia_weight=0.7,
         cognitive_coefficient=1.5,
-        social_coefficent=1.5,
+        social_coefficient=1.5,
         seed=42,
     )
 

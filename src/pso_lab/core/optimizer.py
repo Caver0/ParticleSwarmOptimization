@@ -48,7 +48,7 @@ class PSOOptimizer:
     def _update_velocity(self, state: SwarmState) -> None:
         w = self.config.inertia_weight
         c1 = self.config.cognitive_coefficient
-        c2 = self.config.social_coefficent
+        c2 = self.config.social_coefficient
 
         r1 = np.random.rand(*state.positions.shape)
         r2 = np.random.rand(*state.positions.shape)
