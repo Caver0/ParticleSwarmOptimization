@@ -11,7 +11,7 @@ class FitnessEvaluator(ABC):
         objective_function: ObjectiveFunction,
         positions: np.ndarray,
     ) -> np.ndarray:
-        pass
+        raise NotImplementedError
 
     def shutdown(self) -> None:
         pass
@@ -22,7 +22,8 @@ class SequentialEvaluator(FitnessEvaluator):
     
 
 class ThreadPoolEvaluator(FitnessEvaluator):
-    def __init__(self, max_workers: int | None = None):
+    def __init__(self, max_workers: int | None = None) -> None:
+        self.max_workers = max_workers
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
 
     def evaluate(

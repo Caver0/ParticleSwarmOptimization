@@ -26,7 +26,7 @@ def main() -> None:
                 track_history=True,
             )
 
-            result = run_single_experiment(objective_name=objective_name, config=config)
+            result = run_single_experiment(objective_name=objective_name, config=config, evaluation_mode="threading", max_workers=4,)
             results.append(result)
             save_result(
                 output_path=f"results/{objective_name}/seed_{seed}.json",
