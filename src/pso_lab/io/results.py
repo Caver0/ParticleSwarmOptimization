@@ -1,16 +1,32 @@
 from __future__ import annotations
 import json
+from dataclasses import asdict, is_dataclass
 from pathlib import Path
+from typing import Any
 import numpy as np
 from pso_lab.core.config import PSOConfig
 from pso_lab.experiments.summary import ExperimentSummary
+
+def _to_serializable(obj: Any) -> Any:
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, np.floating):
+        return float(obj)
+    if isinstance(obj, np.integer):
+        return int(obj)
+    if is_dataclass(obj):
+        return asdict(obj)
+    return obj
 
 def save_result(
         output_path: str|Path,
         best_position: np.ndarray,
         best_value: float, 
         config: PSOConfig,
-        objective_name: str
+        objective_name: str,
+        elapsed_time_s: float | None = None,
+        iterations_completed: int | None = None,
+        best_value_history: list[float] | None = None,
 ) -> None:
     """Save PSO optimization result to a JSON file."""
     output_path = Path(output_path)
@@ -19,34 +35,21 @@ def save_result(
         "objective": objective_name,
         "best_value": float(best_value),
         "best_position": best_position.tolist(),
-        "config":{
-            "num_particles": config.num_particles,
-            "dimensions": config.dimensions,
-            "max_iterations": config.max_iterations,
-            "cognitive_coefficient":config.cognitive_coefficient,
-            "social_coefficient" : config.social_coefficient,
-            "seed" : config.seed,
-        },
+        "elapsed_time_s": elapsed_time_s,
+        "iterations_completed": iterations_completed,
+        "best_value_history": best_value_history,
+        "config":asdict(config),
     }
 
     with open(output_path, "w", encoding = "utf-8") as f:
-        json.dump(result, f, indent = 4)
+        json.dump(result, f, indent = 4, default= _to_serializable)
 
 
-def summmary(output_path: str|Path, summmary: ExperimentSummary) -> None:
+def save_summary(output_path: str|Path, summary: ExperimentSummary) -> None:
     """Save benchmark summary statistics to a JSON file."""
 
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    data = {
-        "objective": summmary.objective_name,
-        "num_runs": summmary.num_runs,
-        "mean_best_value": summmary.mean_best_value,
-        "std_best_value": summmary.std_best_value,
-        "min_best_value": summmary.min_best_value,
-        "max_best_value": summmary.max_best_value,
-    }
-
     with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4)
+        json.dump(asdict(summary), f, indent=4, default= _to_serializable)

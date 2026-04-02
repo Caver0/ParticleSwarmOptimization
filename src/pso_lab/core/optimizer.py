@@ -15,7 +15,7 @@ class PSOOptimizer:
         self.objective_function = objective_function
         self.rng = np.random.default_rng(config.seed)
         
-        bounds = np.asarray(self.objective_function, dtype=float)
+        bounds = np.asarray(self.objective_function.bounds, dtype=float)
         self.lower_bounds = bounds[:, 0]
         self.upper_bounds = bounds[:, 1]
         
@@ -57,8 +57,8 @@ class PSOOptimizer:
         c1 = self.config.cognitive_coefficient
         c2 = self.config.social_coefficient
 
-        r1 = np.random.rand(*state.positions.shape)
-        r2 = np.random.rand(*state.positions.shape)
+        r1 = self.rng.random(state.positions.shape)
+        r2 = self.rng.random(state.positions.shape)
 
         cognitive = c1 * r1 * (state.personal_best_positions - state.positions)
         social = c2 * r2 * (state.global_best_position - state.positions)
