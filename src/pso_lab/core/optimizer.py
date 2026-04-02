@@ -6,15 +6,15 @@ from pso_lab.core.boundaries import apply_clamp_bounds
 from pso_lab.core.config import PSOConfig
 from pso_lab.core.models import SwarmState, OptimizationResult
 from pso_lab.objectives import ObjectiveFunction
-
+from pso_lab.parallel.evaluators import FitnessEvaluator, SequentialEvaluator
 class PSOOptimizer:
     """Basic sequential PSO implementation (V0)"""
 
-    def __init__(self, config: PSOConfig, objective_function: ObjectiveFunction):
+    def __init__(self, config: PSOConfig, objective_function: ObjectiveFunction, evaluator: FitnessEvaluator | None = None):
         self.config = config
         self.objective_function = objective_function
         self.rng = np.random.default_rng(config.seed)
-        
+        self.evaluator = evaluator or SequentialEvaluator()
         bounds = np.asarray(self.objective_function.bounds, dtype=float)
         self.lower_bounds = bounds[:, 0]
         self.upper_bounds = bounds[:, 1]
@@ -33,7 +33,7 @@ class PSOOptimizer:
         )
         velocities = np.zeros((n, d), dtype=float)
         
-        values = self.objective_function.evaluate_many(positions)
+        values = self.evaluator.evaluate(self.objective_function, positions)
 
         personal_best_positions = positions.copy()
         personal_best_values = values.copy()
@@ -83,6 +83,7 @@ class PSOOptimizer:
         best_idx = np.argmin(state.personal_best_values)
         state.global_best_position = state.personal_best_positions[best_idx].copy()
         state.global_best_value = float(state.personal_best_values[best_idx])
+        return state.global_best_value < previous_global_best
     
     def optimize(self) -> OptimizationResult:
         state = self._initialize_swarm()
@@ -93,7 +94,7 @@ class PSOOptimizer:
             self._update_velocity(state)
             self._update_position(state)
             
-            values = self.objective_function.evaluate_many(state.positions)
+            values = self.evaluator.evaluate(self.objective_function, state.positions)
             global_improved = self._update_best(state, values)
 
             if self.config.track_history:
