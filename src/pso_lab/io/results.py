@@ -24,6 +24,7 @@ def save_result(
         best_value: float, 
         config: PSOConfig,
         objective_name: str,
+        evaluation_mode: str | None = None,
         elapsed_time_s: float | None = None,
         iterations_completed: int | None = None,
         best_value_history: list[float] | None = None,
@@ -33,6 +34,7 @@ def save_result(
     output_path.parent.mkdir(parents= True, exist_ok=True)
     result = {
         "objective": objective_name,
+        "evaluation_mode": evaluation_mode,
         "best_value": float(best_value),
         "best_position": best_position.tolist(),
         "elapsed_time_s": elapsed_time_s,
@@ -45,11 +47,14 @@ def save_result(
         json.dump(result, f, indent = 4, default= _to_serializable)
 
 
-def save_summary(output_path: str|Path, summary: ExperimentSummary) -> None:
+def save_summary(output_path: str|Path, summary: ExperimentSummary, evaluation_mode:str | None = None) -> None:
     """Save benchmark summary statistics to a JSON file."""
 
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    summary_data =asdict(summary)
+    summary_data["evaluation_mode"] = evaluation_mode
 
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(asdict(summary), f, indent=4, default= _to_serializable)

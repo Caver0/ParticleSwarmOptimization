@@ -11,6 +11,7 @@ class ExperimentResult:
     """Stores the result of a single PSO run."""
 
     objective_name: str
+    evaluation_mode: str
     seed: int|None
     best_position: list[float]
     best_value: float
@@ -18,6 +19,7 @@ class ExperimentResult:
     elapsed_time_s: float
     best_value_history: list[float]
     config: dict
+    
 
 
 def build_evaluator(mode:str = "sequential", max_workers: int | None = None,) -> FitnessEvaluator:
@@ -52,6 +54,7 @@ def run_single_experiment(
 
     return ExperimentResult(
         objective_name=objective.name,
+        evaluation_mode=evaluation_mode,
         seed = config.seed,
         best_position=optimizaiton_result.best_position.tolist(),
         best_value=float(optimizaiton_result.best_value),
