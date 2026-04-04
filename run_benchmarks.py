@@ -56,26 +56,26 @@ def main() -> None:
                 summary=summary,
                 evaluation_mode = evaluation_mode,
             )
-        global_table = []
+    global_table = []
 
-        for evaluation_mode, s in all_summaries:
-            global_table.append({
-                "Mode": evaluation_mode,
-                "Objective": s.objective_name,
-                "Runs": s.num_runs,
-                "Mean Best": f"{s.mean_best_value:.6e}",
-                "Std Best": f"{s.std_best_value:.6e}",
-                "Min Best": f"{s.min_best_value:.6e}",
-                "Max Best": f"{s.max_best_value:.6e}",
-                "Mean Time (s)": f"{s.mean_elapsed_time_s:.6f}",
-                "Std Time (s)": f"{s.std_elapsed_time_s:.6f}",
-                "Mean Iter": f"{s.mean_iterations:.1f}",
-                "Min Iter": s.min_iterations,
-                "Max Iter": s.max_iterations,
-            })
+    for evaluation_mode, s in all_summaries:
+        global_table.append({
+            "Mode": evaluation_mode,
+            "Objective": s.objective_name,
+            "Runs": s.num_runs,
+            "Mean Best": f"{s.mean_best_value:.6e}",
+            "Std Best": f"{s.std_best_value:.6e}",
+            "Min Best": f"{s.min_best_value:.6e}",
+            "Max Best": f"{s.max_best_value:.6e}",
+            "Mean Time (s)": f"{s.mean_elapsed_time_s:.6f}",
+            "Std Time (s)": f"{s.std_elapsed_time_s:.6f}",
+            "Mean Iter": f"{s.mean_iterations:.1f}",
+            "Min Iter": s.min_iterations,
+            "Max Iter": s.max_iterations,
+        })
 
-        print("\n=== GLOBAL BENCHMARK SUMMARY ===")
-        print(tabulate(global_table, headers="keys", tablefmt="grid"))
+    print("\n=== GLOBAL BENCHMARK SUMMARY ===")
+    print(tabulate(global_table, headers="keys", tablefmt="grid"))
 
 if __name__ == "__main__":
     main()
