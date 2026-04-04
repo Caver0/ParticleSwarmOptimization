@@ -7,7 +7,7 @@ from tabulate import tabulate
 import numpy as np
 def main() -> None: 
     all_summaries =[]
-    evaluation_modes = ["sequential", "threading"]
+    evaluation_modes = ["sequential", "threading", "multiprocessing"]
     objectives = ["sphere", "rosenbrock", "rastrigin", "ackley"]
     seeds = [0, 1, 2, 3, 4]
     for evaluation_mode in evaluation_modes:
@@ -34,7 +34,9 @@ def main() -> None:
                 result = run_single_experiment(objective_name=objective_name, 
                                                config=config, 
                                                evaluation_mode=evaluation_mode, 
-                                               max_workers=4 if evaluation_mode == "threading" else None,)
+                                               max_workers=4 if evaluation_mode in {"threading", "multiprocessing"} else None,
+                                               batch_size=8 if evaluation_mode == "multiprocessing" else None,
+                                               )
                 results.append(result)
                 save_result(
                     output_path=f"results/{evaluation_mode}/{objective_name}/seed_{seed}.json",
@@ -76,6 +78,7 @@ def main() -> None:
 
     print("\n=== GLOBAL BENCHMARK SUMMARY ===")
     print(tabulate(global_table, headers="keys", tablefmt="grid"))
+    
 
 if __name__ == "__main__":
     main()

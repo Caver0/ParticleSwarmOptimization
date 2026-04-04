@@ -5,7 +5,7 @@ from time import perf_counter
 from pso_lab.core.config import PSOConfig
 from pso_lab.core.optimizer import PSOOptimizer
 from pso_lab.objectives import build_objective
-from pso_lab.parallel.evaluators import FitnessEvaluator, SequentialEvaluator, ThreadPoolEvaluator
+from pso_lab.parallel.evaluators import FitnessEvaluator, SequentialEvaluator, ThreadPoolEvaluator, ProcessPoolEvaluator
 @dataclass(slots= True)
 class ExperimentResult:
     """Stores the result of a single PSO run."""
@@ -22,7 +22,7 @@ class ExperimentResult:
     
 
 
-def build_evaluator(mode:str = "sequential", max_workers: int | None = None,) -> FitnessEvaluator:
+def build_evaluator(mode:str = "sequential", max_workers: int | None = None, batch_size: int |None = None,) -> FitnessEvaluator:
     """Build the evaluator strategy used to compute particle fitness."""
     normalized_mode = mode.strip().lower()
 
@@ -30,6 +30,8 @@ def build_evaluator(mode:str = "sequential", max_workers: int | None = None,) ->
         return SequentialEvaluator()
     if normalized_mode in {"threading", "threads", "v1"}:
         return ThreadPoolEvaluator(max_workers=max_workers)
+    if normalized_mode in {"multiprocessing", "processes", "v2"}:
+        return ProcessPoolEvaluator(max_workers=max_workers, batch_size=batch_size)
     
     raise ValueError(f"Modo de evaluación desconocido: {mode}")
 
@@ -38,11 +40,12 @@ def run_single_experiment(
         config: PSOConfig,
         evaluation_mode: str = "sequential",
         max_workers: int | None = None,
+        batch_size: int | None = None,
 ) -> ExperimentResult:
     """Run a single PSO experiment and returns its results."""
 
     objective = build_objective(objective_name, dimensions=config.dimensions,)
-    evaluator = build_evaluator(mode = evaluation_mode, max_workers=max_workers,)
+    evaluator = build_evaluator(mode = evaluation_mode, max_workers=max_workers, batch_size=batch_size)
     try:
 
         optimizer = PSOOptimizer(config=config, objective_function=objective, evaluator=evaluator,)

@@ -4,7 +4,7 @@ import numpy as np
 from pso_lab.core.config import PSOConfig
 from pso_lab.experiments.runner import build_evaluator, run_single_experiment
 from pso_lab.objectives import build_objective
-from pso_lab.parallel.evaluators import SequentialEvaluator, ThreadPoolEvaluator
+from pso_lab.parallel.evaluators import SequentialEvaluator, ThreadPoolEvaluator, ProcessPoolEvaluator
 
 def test_sequential_evaluator_matches_objective_evaluate_many() -> None:
     objective = build_objective("sphere", dimensions=2)
@@ -81,3 +81,33 @@ def test_run_single_experiment_threading_returns_valid_result() -> None:
     assert len(result.best_position) == config.dimensions
     assert result.iterations_completed > 0
     assert len(result.best_value_history) == result.iterations_completed
+
+def test_run_single_experiment_multiprocessing_returns_valid_result() -> None:
+    config = PSOConfig(
+        num_particles=20,
+        dimensions=2,
+        max_iterations=30,
+        inertia_weight=0.7,
+        cognitive_coefficient=1.5,
+        social_coefficient=1.5,
+        seed=0,
+        tolerance=0.0,
+        stagnation_patience=None,
+        track_history=True,
+    )
+
+    result = run_single_experiment(
+        objective_name="sphere",
+        config=config,
+        evaluation_mode="multiprocessing",
+        max_workers=2, 
+        batch_size=5,
+    )
+
+    assert result.objective_name == "sphere"
+    assert result.evaluation_mode == "multiprocessing"
+    assert isinstance(result.best_value, float)
+    assert isinstance(result.best_position, list)
+    assert len(result.best_value_history) == result.iterations_completed
+    assert len(result.best_position) == config.dimensions
+    assert result.iterations_completed > 0
