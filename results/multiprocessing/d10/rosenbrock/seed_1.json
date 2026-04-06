@@ -14,7 +14,7 @@
         0.5416089309381067,
         0.29061222553852617
     ],
-    "elapsed_time_s": 0.2389532999950461,
+    "elapsed_time_s": 0.23727909999433905,
     "iterations_completed": 100,
     "best_value_history": [
         901.9909988209408,
@@ -118,6 +118,12 @@
         4.287984967864487,
         4.287757246789051
     ],
+    "timing_stats": {
+        "total_time_s": 0.237273600010667,
+        "fitness_time_s": 0.23220580030465499,
+        "velocity_update_time_s": 0.0018897999543696642,
+        "position_update_time_s": 0.0007517999038100243
+    },
     "config": {
         "num_particles": 30,
         "dimensions": 10,

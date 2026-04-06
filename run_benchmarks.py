@@ -53,6 +53,7 @@ def main() -> None:
                         elapsed_time_s=result.elapsed_time_s,
                         iterations_completed=result.iterations_completed,
                         best_value_history=result.best_value_history,
+                        timing_stats=result.timing_stats,
                     )
                     print(
                         f"Mode {evaluation_mode} | d = {dimension} | Seed {seed} | Best value: {result.best_value:.6e} | Time: {result.elapsed_time_s:.6f} | Iterations: {result.iterations_completed}"

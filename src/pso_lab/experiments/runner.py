@@ -4,6 +4,7 @@ from time import perf_counter
 
 from pso_lab.core.config import PSOConfig
 from pso_lab.core.optimizer import PSOOptimizer
+from pso_lab.core.models import TimingStats
 from pso_lab.objectives import build_objective
 from pso_lab.parallel.evaluators import FitnessEvaluator, SequentialEvaluator, ThreadPoolEvaluator, ProcessPoolEvaluator
 @dataclass(slots= True)
@@ -18,6 +19,7 @@ class ExperimentResult:
     iterations_completed: int
     elapsed_time_s: float
     best_value_history: list[float]
+    timing_stats: dict
     config: dict
     
 
@@ -64,6 +66,7 @@ def run_single_experiment(
         iterations_completed=optimizaiton_result.iterations_completed,
         elapsed_time_s=elapsed_time_s,
         best_value_history=optimizaiton_result.best_value_history,
+        timing_stats=asdict(optimizaiton_result.timing_stats),
         config=asdict(config),
     )
 

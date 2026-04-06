@@ -1,6 +1,14 @@
+from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+
+@dataclass(slots=True)
+class TimingStats:
+    total_time_s: float
+    fitness_time_s: float
+    velocity_update_time_s: float
+    position_update_time_s: float
 
 @dataclass(slots=True)
 class Particle:
@@ -33,4 +41,5 @@ class OptimizationResult:
     best_value: float
     iterations_completed: int
     best_value_history: list[float]
+    timing_stats: TimingStats
 
