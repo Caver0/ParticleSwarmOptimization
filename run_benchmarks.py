@@ -8,61 +8,68 @@ import numpy as np
 def main() -> None: 
     all_summaries =[]
     evaluation_modes = ["sequential", "threading", "multiprocessing"]
+    dimensions = [2, 10, 30]
     objectives = ["sphere", "rosenbrock", "rastrigin", "ackley"]
     seeds = [0, 1, 2, 3, 4]
     for evaluation_mode in evaluation_modes:
         print("\n==============================")
         print(f"Running mode: {evaluation_mode}")
         print("==============================")
-        for objective_name in objectives:
-            print(f"\nRunning benchmarks for: {objective_name}")
-            results = []
-            for seed in seeds:
-                config = PSOConfig(
-                    num_particles=30,
-                    dimensions=2, 
-                    max_iterations=100,
-                    inertia_weight=0.7, 
-                    cognitive_coefficient=1.5,
-                    social_coefficient=1.5,
-                    seed=seed,
-                    tolerance=0.0,
-                    stagnation_patience=None, 
-                    track_history=True,
-                )
+        for dimension in dimensions:
+            print("\n------------------------------")
+            print(f"Running dimension: d={dimension}")
+            print("------------------------------")
+            for objective_name in objectives:
+                
+                print(f"\nRunning benchmarks for: {objective_name}")
+                results = []
+                for seed in seeds:
+                    config = PSOConfig(
+                        num_particles=30,
+                        dimensions=dimension, 
+                        max_iterations=100,
+                        inertia_weight=0.7, 
+                        cognitive_coefficient=1.5,
+                        social_coefficient=1.5,
+                        seed=seed,
+                        tolerance=0.0,
+                        stagnation_patience=None, 
+                        track_history=True,
+                    )
 
-                result = run_single_experiment(objective_name=objective_name, 
-                                               config=config, 
-                                               evaluation_mode=evaluation_mode, 
-                                               max_workers=4 if evaluation_mode in {"threading", "multiprocessing"} else None,
-                                               batch_size=8 if evaluation_mode == "multiprocessing" else None,
-                                               )
-                results.append(result)
-                save_result(
-                    output_path=f"results/{evaluation_mode}/{objective_name}/seed_{seed}.json",
-                    best_position=np.array(result.best_position, dtype=float),
-                    best_value=result.best_value,
-                    config=config,
-                    objective_name=result.objective_name,
-                    elapsed_time_s=result.elapsed_time_s,
-                    iterations_completed=result.iterations_completed,
-                    best_value_history=result.best_value_history,
+                    result = run_single_experiment(objective_name=objective_name, 
+                                                config=config, 
+                                                evaluation_mode=evaluation_mode, 
+                                                max_workers=4 if evaluation_mode in {"threading", "multiprocessing"} else None,
+                                                batch_size=8 if evaluation_mode == "multiprocessing" else None,
+                                                )
+                    results.append(result)
+                    save_result(
+                        output_path=f"results/{evaluation_mode}/d{dimension}/{objective_name}/seed_{seed}.json",
+                        best_position=np.array(result.best_position, dtype=float),
+                        best_value=result.best_value,
+                        config=config,
+                        objective_name=result.objective_name,
+                        elapsed_time_s=result.elapsed_time_s,
+                        iterations_completed=result.iterations_completed,
+                        best_value_history=result.best_value_history,
+                    )
+                    print(
+                        f"Mode {evaluation_mode} | d = {dimension} | Seed {seed} | Best value: {result.best_value:.6e} | Time: {result.elapsed_time_s:.6f} | Iterations: {result.iterations_completed}"
+                    )
+                summary = summarize_experiments(results)
+                all_summaries.append((evaluation_mode, dimension, summary))
+                save_summary(
+                    output_path=f"results/{evaluation_mode}/d{dimension}/{objective_name}_benchmark_summary.json",
+                    summary=summary,
+                    evaluation_mode = evaluation_mode,
                 )
-                print(
-                    f"Mode {evaluation_mode} | Seed {seed} | Best value: {result.best_value:.6e} | Time: {result.elapsed_time_s:.6f} | Iterations: {result.iterations_completed}"
-                )
-            summary = summarize_experiments(results)
-            all_summaries.append((evaluation_mode, summary))
-            save_summary(
-                output_path=f"results/{evaluation_mode}/{objective_name}_benchmark_summary.json",
-                summary=summary,
-                evaluation_mode = evaluation_mode,
-            )
     global_table = []
 
-    for evaluation_mode, s in all_summaries:
+    for evaluation_mode, dimension, s in all_summaries:
         global_table.append({
             "Mode": evaluation_mode,
+            "Dimension": dimension,
             "Objective": s.objective_name,
             "Runs": s.num_runs,
             "Mean Best": f"{s.mean_best_value:.6e}",
