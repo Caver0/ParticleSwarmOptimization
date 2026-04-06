@@ -1,0 +1,13 @@
+{
+    "objective_name": "rosenbrock",
+    "num_runs": 5,
+    "mean_best_value": 1458.2509580850672,
+    "std_best_value": 636.882933295771,
+    "min_best_value": 722.0396178301723,
+    "max_best_value": 2291.1555021538734,
+    "mean_elapsed_time_s": 0.01353359998902306,
+    "std_elapsed_time_s": 0.00012296108939191433,
+    "mean_iterations": 100.0,
+    "min_iterations": 100,
+    "max_iterations": 100
+}

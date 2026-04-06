@@ -1,0 +1,13 @@
+{
+    "objective_name": "ackley",
+    "num_runs": 5,
+    "mean_best_value": 0.00012505468900245731,
+    "std_best_value": 0.00011793240627265616,
+    "min_best_value": 1.4740980074368082e-05,
+    "max_best_value": 0.0002999769923595075,
+    "mean_elapsed_time_s": 0.01430596000282094,
+    "std_elapsed_time_s": 0.0002083584626722253,
+    "mean_iterations": 100.0,
+    "min_iterations": 100,
+    "max_iterations": 100
+}

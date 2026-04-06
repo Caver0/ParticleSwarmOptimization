@@ -1,0 +1,13 @@
+{
+    "objective_name": "sphere",
+    "num_runs": 5,
+    "mean_best_value": 0.00017264126461085668,
+    "std_best_value": 0.0003452820981572422,
+    "min_best_value": 7.233478393667194e-11,
+    "max_best_value": 0.0008632054609252933,
+    "mean_elapsed_time_s": 0.006656339997425676,
+    "std_elapsed_time_s": 6.118211309014516e-05,
+    "mean_iterations": 100.0,
+    "min_iterations": 100,
+    "max_iterations": 100
+}
