@@ -7,6 +7,7 @@ from pso_lab.core.config import PSOConfig
 from pso_lab.experiments.runner import run_single_experiment
 from pso_lab.experiments.summary import summarize_experiments
 from pso_lab.io.results import save_result, save_summary
+from pso_lab.io.logging_utils import setup_logger
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -93,6 +94,7 @@ def get_best_configs() -> dict[int, dict[str, dict[str, float]]]:
 
 def main() -> None:
     args = parse_args()
+    logger = setup_logger("pso_best_config_comparison")
     evaluation_modes = args.modes
     seeds = args.seeds
     dimensions = args.dimensions
@@ -102,20 +104,21 @@ def main() -> None:
     all_summaries = []
     for dimension in dimensions:
         if dimension not in best_configs:
-            print(f"\nSkipping dimension {dimension} - no best config registered")
+            logger.warning("Skipping dimension %d - no best configuration registrated.", dimension)
             continue
         for objective_name in objective_names:
             if objective_name not in best_configs[dimension]:
-                print(f"\nSkipping objective {objective_name} for dimension {dimension} - no best config registered")
+                logger.warning("Skipping objective=%s for dimension=%d - no best configuration registred", objective_name, dimension)
                 continue
             params = best_configs[dimension][objective_name]
-            print("\n========================================")
-            print(f"COMPARING BEST CONFIG FOR: {objective_name}")
-            print(
-                f"w={params['w']:.1f}, c1={params['c1']:.1f}, c2={params['c2']:.1f}"
+            logger.info(
+                "Comparing best config | d=%d | objective=%s | w=%.1f | c1=%.1f | c2=%.1f",
+                dimension,
+                objective_name,
+                params["w"],
+                params["c1"],
+                params["c2"],
             )
-            print("========================================")
-
             for evaluation_mode in evaluation_modes:
                 results = []
 
@@ -158,14 +161,16 @@ def main() -> None:
                         best_value_history=result.best_value_history,
                         timing_stats=result.timing_stats,
                     )
-
-                    print(
-                        f"d = {dimension} | {objective_name} | {evaluation_mode} | seed={seed} | "
-                        f"best={result.best_value:.6e} | "
-                        f"time={result.elapsed_time_s:.6f} | "
-                        f"iter={result.iterations_completed}"
+                    logger.info(
+                        "result | d=%d | objective=%s | mode=%s | seed=%d | best=%.6e | time=%.6f | iterations=%d",
+                        dimension,
+                        objective_name,
+                        evaluation_mode,
+                        seed,
+                        result.best_value,
+                        result.elapsed_time_s,
+                        result.iterations_completed,
                     )
-
                 summary = summarize_experiments(results)
                 all_summaries.append((dimension, objective_name, params, evaluation_mode, summary))
 
@@ -177,7 +182,15 @@ def main() -> None:
                     summary=summary,
                     evaluation_mode=evaluation_mode,
                 )
-
+                logger.info(
+                    "summary | d=%d | objective=%s | mode=%s | mean_best=%.6e | mean_time=%.6f",
+                    dimension,
+                    objective_name,
+                    evaluation_mode,
+                    summary.mean_best_value,
+                    summary.mean_elapsed_time_s,
+                )
+                print("\n")
     global_table = []
 
     for dimension, objective_name, params, evaluation_mode, summary in all_summaries:
@@ -199,7 +212,7 @@ def main() -> None:
                 "Mean Iter": f"{summary.mean_iterations:.1f}",
             }
         )
-
+    logger.info("Best config comparison summary generated")
     print("\n=== BEST CONFIG COMPARISON SUMMARY ===")
     print(tabulate(global_table, headers="keys", tablefmt="grid"))
 

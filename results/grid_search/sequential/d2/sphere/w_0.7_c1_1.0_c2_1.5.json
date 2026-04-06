@@ -1,12 +1,12 @@
 {
     "objective_name": "sphere",
-    "num_runs": 5,
-    "mean_best_value": 1.2770182726368533e-14,
-    "std_best_value": 1.0933859133361716e-14,
+    "num_runs": 2,
+    "mean_best_value": 1.5315363043178384e-14,
+    "std_best_value": 1.5243296237357025e-14,
     "min_best_value": 7.206680582135934e-17,
     "max_best_value": 3.055865928053541e-14,
-    "mean_elapsed_time_s": 0.0064351999782957135,
-    "std_elapsed_time_s": 0.00023336730885099665,
+    "mean_elapsed_time_s": 0.0064352499903179705,
+    "std_elapsed_time_s": 0.00027725001564249396,
     "mean_iterations": 100.0,
     "min_iterations": 100,
     "max_iterations": 100

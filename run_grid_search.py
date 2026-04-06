@@ -5,6 +5,7 @@ import argparse
 from pso_lab.core.config import PSOConfig
 from pso_lab.experiments.runner import run_single_experiment
 from pso_lab.experiments.summary import summarize_experiments
+from pso_lab.io.logging_utils import setup_logger
 from pso_lab.io.results import save_summary
 
 def parse_args() -> argparse.Namespace:
@@ -89,7 +90,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-
+    logger = setup_logger("pso_grid_search")
     evaluation_mode = args.mode
     objective_names = args.objectives
     dimensions = args.dimensions
@@ -102,14 +103,9 @@ def main() -> None:
     all_rows = []
 
     for dimension in dimensions:
-        print("\n========================================")
-        print(f"GRID SEARCH for dimension d={dimension}")
-        print("========================================")
+        logger.info("Grid search for dimension d=%d", dimension)
         for objective_name in objective_names:
-            print("\n==============================")
-            print(f"GRID SEARCH for: {objective_name}")
-            print("==============================")
-
+            logger.info("Grid search for objective=%s", objective_name)
             for inertia_weight, cognitive_coefficient, social_coefficient in product(
                 inertia_values,
                 cognitive_values,
@@ -163,14 +159,18 @@ def main() -> None:
                 }
                 all_rows.append(row)
 
-                print(
-                    f"d = {dimension} | {objective_name} |"
-                    f"w={inertia_weight:.1f}, "
-                    f"c1={cognitive_coefficient:.1f}, "
-                    f"c2={social_coefficient:.1f} | "
-                    f"Mean Best={summary.mean_best_value:.6e} | "
-                    f"Mean Time={summary.mean_elapsed_time_s:.6f}"
+                logger.info(
+                    "mode=%s | d=%d | objective=%s | w=%.1f | c1=%.1f | c2=%.1f | mean_best=%.6e | mean_time=%.6f",
+                    evaluation_mode,
+                    dimension,
+                    objective_name,
+                    inertia_weight,
+                    cognitive_coefficient,
+                    social_coefficient,
+                    summary.mean_best_value,
+                    summary.mean_elapsed_time_s,
                 )
+
             
     sorted_rows = sorted(
         all_rows,
@@ -240,7 +240,7 @@ def main() -> None:
                         "Mean Time (s)": f"{row['Mean Time (s)']:.6f}",
                     }
                 )
-
+    logger.info("Grid search summary generated")
     print("\n=== BEST CONFIGURATION PER OBJECTIVE AND DIMENSION ===")
     print(tabulate(best_rows, headers="keys", tablefmt="grid"))
 
