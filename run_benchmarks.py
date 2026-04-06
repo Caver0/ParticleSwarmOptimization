@@ -4,6 +4,7 @@ from pso_lab.core.config import PSOConfig
 from pso_lab.experiments.runner import run_single_experiment
 from pso_lab.experiments.summary import summarize_experiments
 from pso_lab.io.results import save_summary, save_result
+from pso_lab.io.logging_utils import setup_logger
 from tabulate import tabulate
 import numpy as np
 
@@ -82,6 +83,7 @@ def parse_args() -> argparse.Namespace:
     )
     return parser.parse_args()
 def main() -> None: 
+    logger = setup_logger("pso_benchmarks")
     args = parse_args()
     all_summaries =[]
     evaluation_modes = args.modes
@@ -89,16 +91,12 @@ def main() -> None:
     objectives = args.objectives
     seeds = args.seeds
     for evaluation_mode in evaluation_modes:
-        print("\n==============================")
-        print(f"Running mode: {evaluation_mode}")
-        print("==============================")
+        logger.info("Running mode=%s", evaluation_mode)
         for dimension in dimensions:
-            print("\n------------------------------")
-            print(f"Running dimension: d={dimension}")
-            print("------------------------------")
+            logger.info("Running dimension d=%d", dimension)
             for objective_name in objectives:
                 
-                print(f"\nRunning benchmarks for: {objective_name}")
+                logger.info("Running benchmarks for objective=%s", objective_name)
                 results = []
                 for seed in seeds:
                     config = PSOConfig(
@@ -132,8 +130,15 @@ def main() -> None:
                         best_value_history=result.best_value_history,
                         timing_stats=result.timing_stats,
                     )
-                    print(
-                        f"Mode {evaluation_mode} | d = {dimension} | Seed {seed} | Best value: {result.best_value:.6e} | Time: {result.elapsed_time_s:.6f} | Iterations: {result.iterations_completed}"
+                    logger.info(
+                        "mode=%s | d=%d  | objective=%s | seed=%d | best=%.6e | time=%.6f | iterations=%d",
+                        evaluation_mode,
+                        dimension,
+                        objective_name,
+                        seed,
+                        result.best_value,
+                        result.elapsed_time_s,
+                        result.iterations_completed,
                     )
                 summary = summarize_experiments(results)
                 all_summaries.append((evaluation_mode, dimension, summary))
@@ -142,6 +147,15 @@ def main() -> None:
                     summary=summary,
                     evaluation_mode = evaluation_mode,
                 )
+                logger.info(
+                    "summary | mode=%s | d=%d | objective=%s | mean_best=%.6e | mean_time=%.6f",
+                    evaluation_mode,
+                    dimension,
+                    objective_name,
+                    summary.mean_best_value,
+                    summary.mean_elapsed_time_s,
+                )
+
     global_table = []
 
     for evaluation_mode, dimension, s in all_summaries:
@@ -161,6 +175,7 @@ def main() -> None:
             "Max Iter": s.max_iterations,
         })
 
+    logger.info("Global benchmark summary generated")
     print("\n=== GLOBAL BENCHMARK SUMMARY ===")
     print(tabulate(global_table, headers="keys", tablefmt="grid"))
     
