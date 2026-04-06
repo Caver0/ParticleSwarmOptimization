@@ -1,16 +1,93 @@
 from __future__ import annotations
+import argparse
 from pso_lab.core.config import PSOConfig
 from pso_lab.experiments.runner import run_single_experiment
 from pso_lab.experiments.summary import summarize_experiments
 from pso_lab.io.results import save_summary, save_result
 from tabulate import tabulate
 import numpy as np
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run PSO benchmarks across evaluation modes, dimensions and objectives.")
+    parser.add_argument(
+        "--modes",
+        nargs="+",
+        default=["sequential", "threading", "multiprocessing"],
+        choices=["sequential", "threading", "multiprocessing"],
+        help="Evaluation modes to benchmark",
+
+    )
+    parser.add_argument(
+        "--dimensions",
+        nargs="+",
+        type=int,
+        default=[2, 10, 30],
+        help="Dimensions to benchmark",
+    )
+    parser.add_argument(
+        "--objectives",
+        nargs="+",
+        default=["sphere", "rosenbrock", "rastrigin", "ackley"],
+        choices=["sphere", "rosenbrock", "rastrigin", "ackley"],
+        help="Objective functions to benchmark",
+    )
+    parser.add_argument(
+        "--seeds",
+        nargs="+",
+        type=int,
+        default=[0, 1, 2, 3, 4],
+        help="Random seeds for benchmarking",
+    )
+    parser.add_argument(
+        "--particles",
+        type=int,
+        default=30,
+        help="Number of particles in the swarm",
+    )
+    parser.add_argument(
+        "--iterations",
+        type=int,
+        default=100,
+        help="Maximum number of iterations",
+    )
+    parser.add_argument(
+        "--inertia",
+        type=float,
+        default=0.7,
+        help="Inertia weight (w)",
+    )
+    parser.add_argument(
+        "--c1",
+        type=float,
+        default=1.5,
+        help="Cognitive coefficient (c1)",
+    )
+    parser.add_argument(
+        "--c2",
+        type=float,
+        default=1.5,
+        help="Social coefficient (c2)",
+    )
+    parser.add_argument(
+        "--max_workers",
+        type=int,
+        default=4,
+        help="Max workers for parallel modes (threading and multiprocessing)",
+    )
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=8,
+        help="Batch size for multiprocessing evaluator",
+    )
+    return parser.parse_args()
 def main() -> None: 
+    args = parse_args()
     all_summaries =[]
-    evaluation_modes = ["sequential", "threading", "multiprocessing"]
-    dimensions = [2, 10, 30]
-    objectives = ["sphere", "rosenbrock", "rastrigin", "ackley"]
-    seeds = [0, 1, 2, 3, 4]
+    evaluation_modes = args.modes
+    dimensions = args.dimensions
+    objectives = args.objectives
+    seeds = args.seeds
     for evaluation_mode in evaluation_modes:
         print("\n==============================")
         print(f"Running mode: {evaluation_mode}")
@@ -25,12 +102,12 @@ def main() -> None:
                 results = []
                 for seed in seeds:
                     config = PSOConfig(
-                        num_particles=30,
+                        num_particles=args.particles,
                         dimensions=dimension, 
-                        max_iterations=100,
-                        inertia_weight=0.7, 
-                        cognitive_coefficient=1.5,
-                        social_coefficient=1.5,
+                        max_iterations=args.iterations,
+                        inertia_weight=args.inertia, 
+                        cognitive_coefficient=args.c1,
+                        social_coefficient=args.c2,
                         seed=seed,
                         tolerance=0.0,
                         stagnation_patience=None, 
@@ -40,8 +117,8 @@ def main() -> None:
                     result = run_single_experiment(objective_name=objective_name, 
                                                 config=config, 
                                                 evaluation_mode=evaluation_mode, 
-                                                max_workers=4 if evaluation_mode in {"threading", "multiprocessing"} else None,
-                                                batch_size=8 if evaluation_mode == "multiprocessing" else None,
+                                                max_workers=args.max_workers if evaluation_mode in {"threading", "multiprocessing"} else None,
+                                                batch_size=args.batch_size if evaluation_mode == "multiprocessing" else None,
                                                 )
                     results.append(result)
                     save_result(
