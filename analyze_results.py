@@ -8,6 +8,9 @@ from tabulate import tabulate
 
 from pso_lab.io.logging_utils import setup_logger
 from pso_lab.viz.plots import (
+    save_baseline_convergence_plots,
+    save_baseline_time_comparison_plot,
+    save_baseline_time_ratio_plot,
     save_best_value_plot,
     save_convergence_plots,
     save_time_plot,
@@ -37,6 +40,24 @@ def _parse_result_metadata(result_file: Path, *, is_summary: bool) -> dict[str, 
             if dim_token.startswith("d"):
                 dimension = int(dim_token[1:])
             objective = path_parts[idx + 3]
+        except (ValueError, IndexError):
+            pass
+
+    elif "pyswarm_baseline" in path_parts:
+        source = "pyswarm_baseline"
+        try:
+            idx = path_parts.index("pyswarm_baseline")
+            mode = path_parts[idx + 1]
+            dim_token = path_parts[idx + 2]
+            if dim_token.startswith("d"):
+                dimension = int(dim_token[1:])
+
+            if is_summary:
+                objective = result_file.stem.replace("_summary", "")
+            else:
+                objective = path_parts[idx + 3]
+                if result_file.stem.startswith("seed_"):
+                    seed = int(result_file.stem.replace("seed_", ""))
         except (ValueError, IndexError):
             pass
 
@@ -268,6 +289,10 @@ def main() -> None:
     save_grid_search_heatmaps(df, plots_dir)
     history_df = load_history_files("results", source="best_config_comparison")
     save_convergence_plots(history_df, plots_dir)
+    baseline_history_df = load_history_files("results", source="pyswarm_baseline")
+    save_baseline_convergence_plots(baseline_history_df, plots_dir)
+    save_baseline_time_comparison_plot(df, plots_dir)
+    save_baseline_time_ratio_plot(df, plots_dir)
     logger.info("Plots saved in %s", plots_dir)
     print(f"\nPlots generated in: {plots_dir}")
 

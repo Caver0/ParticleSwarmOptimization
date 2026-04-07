@@ -384,6 +384,48 @@ def parse_best_configs_comparison_args(
     return build_best_configs_comparison_parser().parse_args(argv)
 
 
+def build_pyswarm_baseline_parser() -> argparse.ArgumentParser:
+    parser = _build_parser("Compare our PSO implementations against a pyswarm baseline.")
+    _add_modes_argument(
+        parser,
+        default=EVALUATION_MODE_CHOICES,
+        help_text="Our PSO evaluation modes to compare against pyswarm.",
+    )
+    _add_dimensions_argument(
+        parser,
+        default=DEFAULT_BENCHMARK_DIMENSIONS,
+        help_text="Problem dimensions to compare.",
+    )
+    _add_objectives_argument(
+        parser,
+        help_text="Objective functions to compare.",
+    )
+    _add_seeds_argument(
+        parser,
+        help_text="Random seeds for reproducible runs.",
+    )
+    _add_particles_argument(parser, help_text="Number of particles in the swarm.")
+    _add_iterations_argument(parser, help_text="Maximum number of PSO iterations.")
+    _add_inertia_argument(parser, help_text="Inertia weight (w).")
+    _add_c1_argument(parser, help_text="Cognitive coefficient (c1).")
+    _add_c2_argument(parser, help_text="Social coefficient (c2).")
+    _add_max_workers_argument(
+        parser,
+        flags=("--max_workers", "--max-workers"),
+        help_text="Maximum workers for threading/multiprocessing evaluators.",
+    )
+    _add_batch_size_argument(
+        parser,
+        flags=("--batch_size", "--batch-size"),
+        help_text="Batch size for the multiprocessing evaluator.",
+    )
+    return parser
+
+
+def parse_pyswarm_baseline_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    return build_pyswarm_baseline_parser().parse_args(argv)
+
+
 def build_visualization_parser() -> argparse.ArgumentParser:
     parser = _build_parser("Generate 2D particle-motion plots for 3D PSO runs.")
     _add_methods_argument(parser)

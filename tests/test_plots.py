@@ -2,7 +2,13 @@ from pathlib import Path
 
 import pandas as pd
 
-from pso_lab.viz.plots import save_convergence_plots, save_particle_motion_plot
+from pso_lab.viz.plots import (
+    save_baseline_convergence_plots,
+    save_baseline_time_comparison_plot,
+    save_baseline_time_ratio_plot,
+    save_convergence_plots,
+    save_particle_motion_plot,
+)
 
 
 def test_save_convergence_plots_creates_one_file_per_dimension(tmp_path: Path) -> None:
@@ -99,3 +105,169 @@ def test_save_particle_motion_plot_creates_image(tmp_path: Path) -> None:
     assert output_path is not None
     assert output_path.exists()
     assert output_path.name.endswith("_v3.png")
+
+
+def test_save_baseline_convergence_plots_creates_one_file_per_dimension(tmp_path: Path) -> None:
+    history_df = pd.DataFrame(
+        [
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "sequential",
+                "Dimension": 2,
+                "Objective": "sphere",
+                "Seed": 0,
+                "Best Value History": [1.0, 0.5, 0.1],
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "threading",
+                "Dimension": 2,
+                "Objective": "sphere",
+                "Seed": 1,
+                "Best Value History": [0.9, 0.45, 0.09],
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "multiprocessing",
+                "Dimension": 2,
+                "Objective": "sphere",
+                "Seed": 2,
+                "Best Value History": [0.95, 0.4, 0.08],
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "pyswarm",
+                "Dimension": 2,
+                "Objective": "sphere",
+                "Seed": 3,
+                "Best Value History": [1.2, 0.6, 0.12],
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "sequential",
+                "Dimension": 10,
+                "Objective": "ackley",
+                "Seed": 0,
+                "Best Value History": [5.0, 1.0, 0.2],
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "pyswarm",
+                "Dimension": 10,
+                "Objective": "ackley",
+                "Seed": 3,
+                "Best Value History": [5.5, 1.1, 0.25],
+            },
+        ]
+    )
+
+    save_baseline_convergence_plots(history_df, tmp_path)
+
+    assert (tmp_path / "baseline_convergence_d2.png").exists()
+    assert (tmp_path / "baseline_convergence_d10.png").exists()
+
+
+def test_save_baseline_time_comparison_plot_creates_image(tmp_path: Path) -> None:
+    summary_df = pd.DataFrame(
+        [
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "sequential",
+                "Dimension": 2,
+                "Objective": "sphere",
+                "Mean Time (s)": 0.01,
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "threading",
+                "Dimension": 2,
+                "Objective": "sphere",
+                "Mean Time (s)": 0.03,
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "multiprocessing",
+                "Dimension": 2,
+                "Objective": "sphere",
+                "Mean Time (s)": 0.28,
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "pyswarm",
+                "Dimension": 2,
+                "Objective": "sphere",
+                "Mean Time (s)": 0.02,
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "sequential",
+                "Dimension": 10,
+                "Objective": "ackley",
+                "Mean Time (s)": 0.04,
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "pyswarm",
+                "Dimension": 10,
+                "Objective": "ackley",
+                "Mean Time (s)": 0.05,
+            },
+        ]
+    )
+
+    save_baseline_time_comparison_plot(summary_df, tmp_path)
+
+    assert (tmp_path / "baseline_time_comparison.png").exists()
+
+
+def test_save_baseline_time_ratio_plot_creates_image(tmp_path: Path) -> None:
+    summary_df = pd.DataFrame(
+        [
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "sequential",
+                "Dimension": 2,
+                "Objective": "sphere",
+                "Mean Time (s)": 0.01,
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "threading",
+                "Dimension": 2,
+                "Objective": "sphere",
+                "Mean Time (s)": 0.03,
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "multiprocessing",
+                "Dimension": 2,
+                "Objective": "sphere",
+                "Mean Time (s)": 0.28,
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "pyswarm",
+                "Dimension": 2,
+                "Objective": "sphere",
+                "Mean Time (s)": 0.02,
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "sequential",
+                "Dimension": 10,
+                "Objective": "ackley",
+                "Mean Time (s)": 0.04,
+            },
+            {
+                "Source": "pyswarm_baseline",
+                "Mode": "pyswarm",
+                "Dimension": 10,
+                "Objective": "ackley",
+                "Mean Time (s)": 0.05,
+            },
+        ]
+    )
+
+    save_baseline_time_ratio_plot(summary_df, tmp_path)
+
+    assert (tmp_path / "baseline_time_ratio_vs_pyswarm.png").exists()

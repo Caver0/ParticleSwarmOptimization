@@ -6,12 +6,13 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.colors import TwoSlopeNorm
 import numpy as np
 import pandas as pd
 from pso_lab.objectives import build_objective
 
 
-MODE_ORDER = ["sequential", "threading", "multiprocessing"]
+MODE_ORDER = ["sequential", "threading", "multiprocessing", "pyswarm"]
 OBJECTIVE_ORDER = ["sphere", "rosenbrock", "rastrigin", "ackley"]
 METHOD_STYLES = {
     "sequential": {
@@ -34,6 +35,13 @@ METHOD_STYLES = {
         "linestyle": "-.",
         "marker": "^",
         "markevery": (6, 10),
+    },
+    "pyswarm": {
+        "label": "pyswarm",
+        "color": "tab:red",
+        "linestyle": ":",
+        "marker": "D",
+        "markevery": (1, 10),
     },
 }
 
@@ -81,6 +89,25 @@ def _safe_positive(values: np.ndarray) -> np.ndarray:
     floor = positive_values.min() * 0.5 if positive_values.size else 1e-16
     floor = max(floor, 1e-300)
     return np.where(values > 0, values, floor)
+
+
+def _filter_summary_source(df: pd.DataFrame, source: str) -> pd.DataFrame:
+    if df.empty or "Source" not in df.columns:
+        return pd.DataFrame()
+
+    plot_df = df[df["Source"] == source].copy()
+    if plot_df.empty:
+        return plot_df
+
+    plot_df["Mode"] = plot_df["Mode"].map(_normalize_mode_name)
+    return plot_df
+
+
+def _ordered_objectives(values: pd.Series) -> list[str]:
+    objectives = [objective for objective in OBJECTIVE_ORDER if objective in values.unique()]
+    if objectives:
+        return objectives
+    return sorted(values.dropna().astype(str).unique().tolist())
 
 
 def _history_to_curve_df(history_df: pd.DataFrame) -> pd.DataFrame:
@@ -438,6 +465,8 @@ def save_convergence_plots(
     history_df: pd.DataFrame,
     output_dir: str | Path,
     source: str = "best_config_comparison",
+    filename_prefix: str = "convergence",
+    title_prefix: str = "PSO convergence by objective and method",
 ) -> None:
     output_dir = _ensure_output_dir(output_dir)
 
@@ -534,12 +563,212 @@ def save_convergence_plots(
 
         fig.legend(handles=handles, title="Method", loc="upper center", ncol=max(1, len(handles)))
         fig.suptitle(
-            f"PSO convergence by objective and method | d={dimension}",
+            f"{title_prefix} | d={dimension}",
             y=0.995,
         )
         fig.tight_layout(rect=(0, 0, 1, 0.95))
-        fig.savefig(output_dir / f"convergence_d{dimension}.png", dpi=200, bbox_inches="tight")
+        fig.savefig(output_dir / f"{filename_prefix}_d{dimension}.png", dpi=200, bbox_inches="tight")
         plt.close(fig)
+
+
+def save_baseline_convergence_plots(
+    history_df: pd.DataFrame,
+    output_dir: str | Path,
+    source: str = "pyswarm_baseline",
+) -> None:
+    save_convergence_plots(
+        history_df=history_df,
+        output_dir=output_dir,
+        source=source,
+        filename_prefix="baseline_convergence",
+        title_prefix="PSO vs pyswarm convergence by objective and solver",
+    )
+
+
+def save_baseline_time_comparison_plot(
+    df: pd.DataFrame,
+    output_dir: str | Path,
+    source: str = "pyswarm_baseline",
+) -> None:
+    output_dir = _ensure_output_dir(output_dir)
+    output_path = output_dir / "baseline_time_comparison.png"
+
+    plot_df = _filter_summary_source(df, source)
+    required_columns = {"Objective", "Dimension", "Mode", "Mean Time (s)"}
+    if plot_df.empty or not required_columns.issubset(plot_df.columns):
+        return
+
+    plot_df = (
+        plot_df.dropna(subset=["Objective", "Dimension", "Mode", "Mean Time (s)"])
+        .groupby(["Objective", "Dimension", "Mode"], as_index=False)["Mean Time (s)"]
+        .mean()
+    )
+    if plot_df.empty:
+        return
+
+    objectives = _ordered_objectives(plot_df["Objective"])
+    ncols = 2 if len(objectives) > 1 else 1
+    nrows = math.ceil(len(objectives) / ncols)
+    fig, axes = plt.subplots(
+        nrows=nrows,
+        ncols=ncols,
+        figsize=(14, 4.8 * nrows),
+        squeeze=False,
+    )
+    axes_flat = axes.flatten()
+
+    for index, objective in enumerate(objectives):
+        ax = axes_flat[index]
+        objective_df = plot_df[plot_df["Objective"] == objective]
+        dimensions = sorted(objective_df["Dimension"].astype(int).unique().tolist())
+        modes = [mode for mode in MODE_ORDER if mode in objective_df["Mode"].unique()]
+        if not dimensions or not modes:
+            continue
+
+        x = np.arange(len(dimensions), dtype=float)
+        width = min(0.22, 0.84 / max(1, len(modes)))
+
+        for mode_index, mode in enumerate(modes):
+            style = METHOD_STYLES[mode]
+            offsets = x + (mode_index - (len(modes) - 1) / 2.0) * width
+            values = []
+            for dimension in dimensions:
+                match = objective_df[
+                    (objective_df["Dimension"] == dimension) & (objective_df["Mode"] == mode)
+                ]
+                values.append(float(match["Mean Time (s)"].iloc[0]) if not match.empty else np.nan)
+
+            ax.bar(
+                offsets,
+                values,
+                width=width * 0.95,
+                color=style["color"],
+                alpha=0.9,
+                label=style["label"],
+            )
+
+        ax.set_title(objective.capitalize())
+        ax.set_xticks(x)
+        ax.set_xticklabels([f"d={dimension}" for dimension in dimensions])
+        ax.set_xlabel("Dimension")
+        ax.set_ylabel("Mean Time (s)")
+        ax.grid(True, axis="y", alpha=0.25)
+
+        finite_values = objective_df["Mean Time (s)"].to_numpy(dtype=float)
+        positive_values = finite_values[finite_values > 0]
+        if positive_values.size >= 2 and positive_values.max() / positive_values.min() >= 20:
+            ax.set_yscale("log")
+
+    for index in range(len(objectives), len(axes_flat)):
+        fig.delaxes(axes_flat[index])
+
+    handles = [
+        plt.Rectangle((0, 0), 1, 1, color=METHOD_STYLES[mode]["color"], label=METHOD_STYLES[mode]["label"])
+        for mode in MODE_ORDER
+        if mode in plot_df["Mode"].unique()
+    ]
+    fig.legend(handles=handles, title="Solver", loc="upper center", ncol=max(1, len(handles)))
+    fig.suptitle("Mean execution time: our PSO vs pyswarm", y=0.995)
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+    fig.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+
+def save_baseline_time_ratio_plot(
+    df: pd.DataFrame,
+    output_dir: str | Path,
+    source: str = "pyswarm_baseline",
+    baseline_mode: str = "pyswarm",
+) -> None:
+    output_dir = _ensure_output_dir(output_dir)
+    output_path = output_dir / "baseline_time_ratio_vs_pyswarm.png"
+
+    plot_df = _filter_summary_source(df, source)
+    required_columns = {"Objective", "Dimension", "Mode", "Mean Time (s)"}
+    if plot_df.empty or not required_columns.issubset(plot_df.columns):
+        return
+
+    plot_df = plot_df.dropna(subset=["Objective", "Dimension", "Mode", "Mean Time (s)"])
+    if plot_df.empty:
+        return
+
+    pivot = plot_df.pivot_table(
+        index=["Objective", "Dimension"],
+        columns="Mode",
+        values="Mean Time (s)",
+        aggfunc="mean",
+    )
+    if pivot.empty or baseline_mode not in pivot.columns:
+        return
+
+    comparison_modes = [
+        mode
+        for mode in MODE_ORDER
+        if mode != baseline_mode and mode in pivot.columns
+    ]
+    if not comparison_modes:
+        return
+
+    ratio_df = pd.DataFrame(index=pivot.index)
+    for mode in comparison_modes:
+        ratio_df[mode] = pivot[mode] / pivot[baseline_mode]
+
+    ratio_df = ratio_df.replace([np.inf, -np.inf], np.nan).dropna(how="all")
+    if ratio_df.empty:
+        return
+
+    ordered_index = []
+    for objective in _ordered_objectives(pd.Series(ratio_df.index.get_level_values(0))):
+        objective_index = [item for item in ratio_df.index if item[0] == objective]
+        ordered_index.extend(sorted(objective_index, key=lambda item: int(item[1])))
+    ratio_df = ratio_df.loc[ordered_index]
+
+    values = ratio_df.to_numpy(dtype=float)
+    valid_values = values[np.isfinite(values)]
+    if valid_values.size == 0:
+        return
+
+    distance = max(abs(valid_values.min() - 1.0), abs(valid_values.max() - 1.0), 1e-6)
+    norm = TwoSlopeNorm(vmin=1.0 - distance, vcenter=1.0, vmax=1.0 + distance)
+
+    fig_width = max(8, 1.6 * len(comparison_modes) + 4)
+    fig_height = max(5, 0.65 * len(ratio_df.index) + 2.8)
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+    image = ax.imshow(values, aspect="auto", cmap="RdYlGn_r", norm=norm)
+
+    ax.set_xticks(np.arange(len(comparison_modes)))
+    ax.set_xticklabels([METHOD_STYLES[mode]["label"] for mode in comparison_modes])
+    ax.set_yticks(np.arange(len(ratio_df.index)))
+    ax.set_yticklabels([f"{objective} | d={dimension}" for objective, dimension in ratio_df.index])
+    ax.set_xlabel("Solver")
+    ax.set_ylabel("Objective | Dimension")
+    ax.set_title("Mean time ratio against pyswarm (solver / pyswarm)")
+
+    for row_index in range(values.shape[0]):
+        for column_index in range(values.shape[1]):
+            value = values[row_index, column_index]
+            if not np.isfinite(value):
+                text = "NA"
+                text_color = "black"
+            else:
+                text = f"{value:.2f}x"
+                text_color = "white" if abs(value - 1.0) > distance * 0.45 else "black"
+            ax.text(
+                column_index,
+                row_index,
+                text,
+                ha="center",
+                va="center",
+                color=text_color,
+                fontsize=9,
+            )
+
+    colorbar = fig.colorbar(image, ax=ax)
+    colorbar.set_label("Time ratio")
+
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
 
 
 def save_particle_motion_plot(

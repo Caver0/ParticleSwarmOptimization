@@ -61,4 +61,4 @@ def save_summary(output_path: str|Path, summary: ExperimentSummary, evaluation_m
     summary_data["evaluation_mode"] = evaluation_mode
 
     with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(asdict(summary), f, indent=4, default= _to_serializable)
+        json.dump(summary_data, f, indent=4, default= _to_serializable)
