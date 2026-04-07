@@ -1,0 +1,13 @@
+{
+    "objective_name": "rastrigin",
+    "num_runs": 5,
+    "mean_best_value": 1.0898648617432037e-18,
+    "std_best_value": 1.5026024905445492e-18,
+    "min_best_value": 4.4162781748120774e-26,
+    "max_best_value": 3.815741736518146e-18,
+    "mean_elapsed_time_s": 0.04154079996515066,
+    "std_elapsed_time_s": 0.0036183224747580963,
+    "mean_iterations": 100.0,
+    "min_iterations": 100,
+    "max_iterations": 100
+}

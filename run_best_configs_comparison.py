@@ -1,5 +1,6 @@
 from __future__ import annotations
 import argparse
+from time import perf_counter
 import numpy as np
 from tabulate import tabulate
 
@@ -102,6 +103,8 @@ def main() -> None:
 
     best_configs = get_best_configs()
     all_summaries = []
+    mode_elapsed_times = {mode: 0.0 for mode in evaluation_modes}
+    total_start = perf_counter()
     for dimension in dimensions:
         if dimension not in best_configs:
             logger.warning("Skipping dimension %d - no best configuration registrated.", dimension)
@@ -120,6 +123,7 @@ def main() -> None:
                 params["c2"],
             )
             for evaluation_mode in evaluation_modes:
+                mode_start = perf_counter()
                 results = []
 
                 for seed in seeds:
@@ -191,7 +195,9 @@ def main() -> None:
                     summary.mean_best_value,
                     summary.mean_elapsed_time_s,
                 )
+                mode_elapsed_times[evaluation_mode] += perf_counter() - mode_start
                 print("\n")
+    total_elapsed_time = perf_counter() - total_start
     global_table = []
 
     for dimension, objective_name, params, evaluation_mode, summary in all_summaries:
@@ -217,7 +223,26 @@ def main() -> None:
     comparison_table = tabulate(global_table, headers="keys", tablefmt="grid")
     print("\n=== BEST CONFIG COMPARISON SUMMARY ===")
     print(comparison_table)
-    logger.info("BEST CONFIG COMPARISON SUMMARY\n%s", comparison_table)
+    logger.info("BEST CONFIG COMPARISON SUMMARY printed")
+
+    runtime_rows = [
+        {
+            "Mode": mode,
+            "Total Time (s)": f"{elapsed_time:.6f}",
+        }
+        for mode, elapsed_time in mode_elapsed_times.items()
+    ]
+    runtime_rows.append(
+        {
+            "Mode": "total",
+            "Total Time (s)": f"{total_elapsed_time:.6f}",
+        }
+    )
+
+    runtime_table = tabulate(runtime_rows, headers="keys", tablefmt="grid")
+    print("\n=== BEST CONFIG COMPARISON EXECUTION TIMES ===")
+    print(runtime_table)
+    logger.info("BEST CONFIG COMPARISON EXECUTION TIMES printed")
 
 
 if __name__ == "__main__":

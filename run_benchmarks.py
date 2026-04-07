@@ -1,5 +1,6 @@
 from __future__ import annotations
 import argparse
+from time import perf_counter
 from pso_lab.core.config import PSOConfig
 from pso_lab.experiments.runner import run_single_experiment
 from pso_lab.experiments.summary import summarize_experiments
@@ -86,11 +87,14 @@ def main() -> None:
     logger = setup_logger("pso_benchmarks")
     args = parse_args()
     all_summaries =[]
+    mode_elapsed_times = {}
+    total_start = perf_counter()
     evaluation_modes = args.modes
     dimensions = args.dimensions
     objectives = args.objectives
     seeds = args.seeds
     for evaluation_mode in evaluation_modes:
+        mode_start = perf_counter()
         logger.info("Running mode=%s", evaluation_mode)
         for dimension in dimensions:
             logger.info("Running dimension d=%d", dimension)
@@ -156,6 +160,9 @@ def main() -> None:
                     summary.mean_best_value,
                     summary.mean_elapsed_time_s,
                 )
+        mode_elapsed_times[evaluation_mode] = perf_counter() - mode_start
+
+    total_elapsed_time = perf_counter() - total_start
 
     global_table = []
 
@@ -180,7 +187,26 @@ def main() -> None:
     global_summary_table = tabulate(global_table, headers="keys", tablefmt="grid")
     print("\n=== GLOBAL BENCHMARK SUMMARY ===")
     print(global_summary_table)
-    logger.info("GLOBAL BENCHMARK SUMMARY\n%s", global_summary_table)
+    logger.info("GLOBAL BENCHMARK SUMMARY printed")
+
+    runtime_rows = [
+        {
+            "Mode": mode,
+            "Total Time (s)": f"{elapsed_time:.6f}",
+        }
+        for mode, elapsed_time in mode_elapsed_times.items()
+    ]
+    runtime_rows.append(
+        {
+            "Mode": "total",
+            "Total Time (s)": f"{total_elapsed_time:.6f}",
+        }
+    )
+
+    runtime_table = tabulate(runtime_rows, headers="keys", tablefmt="grid")
+    print("\n=== BENCHMARK EXECUTION TIMES ===")
+    print(runtime_table)
+    logger.info("BENCHMARK EXECUTION TIMES printed")
     
 
 if __name__ == "__main__":
