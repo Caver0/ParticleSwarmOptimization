@@ -111,6 +111,10 @@ def load_summary_files(results_root: str | Path = "results") -> pd.DataFrame:
             dimension = metadata["Dimension"]
             source = metadata["Source"]
 
+            if source != "unknown" and dimension is None:
+                logger.info("Skipping legacy summary without dimension metadata: %s", summary_file)
+                continue
+
             row = {
                 "Source": source,
                 "Mode": mode,
@@ -170,11 +174,16 @@ def load_history_files(
             if source is not None and record_source != source:
                 continue
 
+            dimension = metadata["Dimension"]
+            if record_source != "unknown" and dimension is None:
+                logger.info("Skipping legacy result without dimension metadata: %s", result_file)
+                continue
+
             config = data.get("config", {})
             row = {
                 "Source": record_source,
                 "Mode": metadata["Mode"] or data.get("evaluation_mode"),
-                "Dimension": metadata["Dimension"] or config.get("dimensions"),
+                "Dimension": dimension or config.get("dimensions"),
                 "Objective": metadata["Objective"] or data.get("objective"),
                 "Seed": metadata["Seed"] if metadata["Seed"] is not None else config.get("seed"),
                 "Iterations": data.get("iterations_completed", len(history)),
@@ -233,7 +242,9 @@ def print_summary_table(df: pd.DataFrame) -> None:
     ]
 
     print("\n=== ANALYSIS SUMMARY TABLE ===")
-    print(tabulate(printable[columns], headers="keys", tablefmt="grid", showindex=False))
+    summary_table = tabulate(printable[columns], headers="keys", tablefmt="grid", showindex=False)
+    print(summary_table)
+    logger.info("ANALYSIS SUMMARY TABLE\n%s", summary_table)
 
 
 def main() -> None:

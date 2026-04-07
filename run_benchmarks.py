@@ -177,8 +177,10 @@ def main() -> None:
         })
 
     logger.info("Global benchmark summary generated")
+    global_summary_table = tabulate(global_table, headers="keys", tablefmt="grid")
     print("\n=== GLOBAL BENCHMARK SUMMARY ===")
-    print(tabulate(global_table, headers="keys", tablefmt="grid"))
+    print(global_summary_table)
+    logger.info("GLOBAL BENCHMARK SUMMARY\n%s", global_summary_table)
     
 
 if __name__ == "__main__":

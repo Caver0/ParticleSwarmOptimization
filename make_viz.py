@@ -200,8 +200,10 @@ def main() -> None:
                 }
             )
 
+    visualization_table = tabulate(summary_rows, headers="keys", tablefmt="grid")
     print("\n=== PARTICLE MOTION VISUALIZATIONS ===")
-    print(tabulate(summary_rows, headers="keys", tablefmt="grid"))
+    print(visualization_table)
+    logger.info("PARTICLE MOTION VISUALIZATIONS\n%s", visualization_table)
 
 
 if __name__ == "__main__":

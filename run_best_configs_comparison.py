@@ -214,8 +214,10 @@ def main() -> None:
             }
         )
     logger.info("Best config comparison summary generated")
+    comparison_table = tabulate(global_table, headers="keys", tablefmt="grid")
     print("\n=== BEST CONFIG COMPARISON SUMMARY ===")
-    print(tabulate(global_table, headers="keys", tablefmt="grid"))
+    print(comparison_table)
+    logger.info("BEST CONFIG COMPARISON SUMMARY\n%s", comparison_table)
 
 
 if __name__ == "__main__":

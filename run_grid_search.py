@@ -199,8 +199,10 @@ def main() -> None:
             }
         )
 
+    grid_summary_table = tabulate(printable_rows, headers="keys", tablefmt="grid")
     print("\n=== GRID SEARCH SUMMARY ===")
-    print(tabulate(printable_rows, headers="keys", tablefmt="grid"))
+    print(grid_summary_table)
+    logger.info("GRID SEARCH SUMMARY\n%s", grid_summary_table)
     best_rows = []
     top3_rows = []
     for dimension in dimensions:
@@ -241,10 +243,14 @@ def main() -> None:
                     }
                 )
     logger.info("Grid search summary generated")
+    best_config_table = tabulate(best_rows, headers="keys", tablefmt="grid")
     print("\n=== BEST CONFIGURATION PER OBJECTIVE AND DIMENSION ===")
-    print(tabulate(best_rows, headers="keys", tablefmt="grid"))
+    print(best_config_table)
+    logger.info("BEST CONFIGURATION PER OBJECTIVE AND DIMENSION\n%s", best_config_table)
 
+    top3_table = tabulate(top3_rows, headers="keys", tablefmt="grid")
     print("\n=== TOP 3 CONFIGURATIONS PER OBJECTIVE AND DIMENSION ===")
-    print(tabulate(top3_rows, headers="keys", tablefmt="grid"))
+    print(top3_table)
+    logger.info("TOP 3 CONFIGURATIONS PER OBJECTIVE AND DIMENSION\n%s", top3_table)
 if __name__ == "__main__":
     main()

@@ -2,10 +2,12 @@ from __future__ import annotations
 from time import perf_counter
 from pso_lab.core.config import PSOConfig
 from pso_lab.core.optimizer import PSOOptimizer
+from pso_lab.io.logging_utils import setup_logger
 from pso_lab.objectives import build_objective
 from pso_lab.io.results import save_result
 
 def main() -> None:
+    logger = setup_logger("pso_run")
     config = PSOConfig(
         num_particles=30,
         dimensions=2,
@@ -27,9 +29,10 @@ def main() -> None:
     result = optimizer.optimize()
     elapsed_time_s = perf_counter() - start
 
+    output_path = "results/sphere_run.json"
 
     save_result(
-        output_path = "results/sphere_run.json",
+        output_path = output_path,
         best_position = result.best_position,
         best_value = result.best_value,
         config = config,
@@ -40,12 +43,13 @@ def main() -> None:
         swarm_position_history=result.swarm_position_history,
     )
 
-    print("Optimization finished")
-    print(f"Objective: {objective.name}")
-    print(f"Best position: {result.best_position}")
-    print(f"Best value: {result.best_value}")
-    print(f"Itrations completed: {result.iterations_completed}")
-    print(f"Elapsed time (s): {elapsed_time_s:.6f}")
+    logger.info("Optimization finished")
+    logger.info("Objective: %s", objective.name)
+    logger.info("Best position: %s", result.best_position.tolist())
+    logger.info("Best value: %.6e", result.best_value)
+    logger.info("Iterations completed: %d", result.iterations_completed)
+    logger.info("Elapsed time (s): %.6f", elapsed_time_s)
+    logger.info("Result saved to %s", output_path)
 
 
 

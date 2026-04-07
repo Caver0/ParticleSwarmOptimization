@@ -23,9 +23,10 @@ class RosenbrockObjective(ObjectiveFunction):
 @dataclass(slots=True)
 class RastriginObjective(ObjectiveFunction):
     def __call__(self, x: np.ndarray) -> float:
-        return float(
-            10.0 * x.size + np.sum(np.square(x) - 10.0* np.cos(2.0 * np.pi * x))
-        )
+        # Use the algebraically equivalent form x^2 + 10 * (1 - cos(.))
+        # to avoid catastrophic cancellation near the global optimum.
+        oscillation = 1.0 - np.cos(2.0 * np.pi * x)
+        return float(np.sum(np.square(x) + 10.0 * oscillation))
     
 @dataclass(slots=True)
 class AckleyObjective(ObjectiveFunction):
