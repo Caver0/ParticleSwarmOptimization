@@ -37,6 +37,7 @@ def main() -> None:
         elapsed_time_s=elapsed_time_s,
         iterations_completed=result.iterations_completed,
         best_value_history=result.best_value_history,
+        swarm_position_history=result.swarm_position_history,
     )
 
     print("Optimization finished")

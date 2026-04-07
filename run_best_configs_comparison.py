@@ -159,6 +159,7 @@ def main() -> None:
                         elapsed_time_s=result.elapsed_time_s,
                         iterations_completed=result.iterations_completed,
                         best_value_history=result.best_value_history,
+                        swarm_position_history=result.swarm_position_history,
                         timing_stats=result.timing_stats,
                     )
                     logger.info(

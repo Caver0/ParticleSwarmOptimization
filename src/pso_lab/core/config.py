@@ -17,4 +17,5 @@ class PSOConfig:
     tolerance: float = 0.0
     stagnation_patience: int | None = None
     track_history: bool = True
+    track_swarm_history: bool = False
     

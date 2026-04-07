@@ -111,3 +111,30 @@ def test_run_single_experiment_multiprocessing_returns_valid_result() -> None:
     assert len(result.best_value_history) == result.iterations_completed
     assert len(result.best_position) == config.dimensions
     assert result.iterations_completed > 0
+
+
+def test_run_single_experiment_can_return_swarm_history() -> None:
+    config = PSOConfig(
+        num_particles=10,
+        dimensions=3,
+        max_iterations=12,
+        inertia_weight=0.7,
+        cognitive_coefficient=1.5,
+        social_coefficient=1.5,
+        seed=3,
+        tolerance=0.0,
+        stagnation_patience=None,
+        track_history=True,
+        track_swarm_history=True,
+    )
+
+    result = run_single_experiment(
+        objective_name="sphere",
+        config=config,
+        evaluation_mode="sequential",
+    )
+
+    assert result.swarm_position_history is not None
+    assert len(result.swarm_position_history) == result.iterations_completed + 1
+    assert len(result.swarm_position_history[0]) == config.num_particles
+    assert len(result.swarm_position_history[0][0]) == config.dimensions

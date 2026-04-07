@@ -7,6 +7,8 @@ from pso_lab.core.config import PSOConfig
 from pso_lab.core.models import SwarmState, OptimizationResult, TimingStats
 from pso_lab.objectives import ObjectiveFunction
 from pso_lab.parallel.evaluators import FitnessEvaluator, SequentialEvaluator
+
+
 class PSOOptimizer:
     """Basic sequential PSO implementation (V0)"""
 
@@ -86,6 +88,7 @@ class PSOOptimizer:
             state: SwarmState,
             iterations_completed: int,
             best_value_history: list[float],
+            swarm_position_history: list[np.ndarray] | None,
             total_time_s: float,
             fitness_time_s: float,
             velocity_update_time_s: float,
@@ -101,8 +104,10 @@ class PSOOptimizer:
                 fitness_time_s=fitness_time_s,
                 velocity_update_time_s=velocity_update_time_s,
                 position_update_time_s=position_update_time_s,
-            )
-    )
+            ),
+            swarm_position_history=swarm_position_history,
+        )
+
     def optimize(self) -> OptimizationResult:
         total_start = perf_counter()
         fitness_time_s = 0.0
@@ -112,6 +117,9 @@ class PSOOptimizer:
         state = self._initialize_swarm()
         fitness_time_s += perf_counter() - init_fitness_start
         best_value_history: list[float] = []
+        swarm_position_history: list[np.ndarray] | None = [] if self.config.track_swarm_history else None
+        if swarm_position_history is not None:
+            swarm_position_history.append(state.positions.copy())
         iterations_without_improvement = 0
 
         for iteration in range(self.config.max_iterations):
@@ -131,6 +139,8 @@ class PSOOptimizer:
 
             if self.config.track_history:
                 best_value_history.append(state.global_best_value)
+            if swarm_position_history is not None:
+                swarm_position_history.append(state.positions.copy())
             
             if global_improved:
                 iterations_without_improvement = 0
@@ -142,6 +152,7 @@ class PSOOptimizer:
                     state=state,
                     iterations_completed=iteration+1,
                     best_value_history=best_value_history,
+                    swarm_position_history=swarm_position_history,
                     total_time_s=total_time_s,
                     fitness_time_s=fitness_time_s,
                     velocity_update_time_s=velocity_update_time_s,
@@ -153,6 +164,7 @@ class PSOOptimizer:
                     state=state,
                     iterations_completed=iteration+1,
                     best_value_history=best_value_history,
+                    swarm_position_history=swarm_position_history,
                     total_time_s=total_time_s,
                     fitness_time_s=fitness_time_s,
                     velocity_update_time_s=velocity_update_time_s,
@@ -163,6 +175,7 @@ class PSOOptimizer:
             state=state,
             iterations_completed=self.config.max_iterations,
             best_value_history=best_value_history,
+            swarm_position_history=swarm_position_history,
             total_time_s=total_time_s,
             fitness_time_s=fitness_time_s,
             velocity_update_time_s=velocity_update_time_s,

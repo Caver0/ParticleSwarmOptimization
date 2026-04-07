@@ -21,6 +21,7 @@ class ExperimentResult:
     best_value_history: list[float]
     timing_stats: dict
     config: dict
+    swarm_position_history: list[list[list[float]]] | None = None
     
 
 
@@ -68,5 +69,10 @@ def run_single_experiment(
         best_value_history=optimizaiton_result.best_value_history,
         timing_stats=asdict(optimizaiton_result.timing_stats),
         config=asdict(config),
+        swarm_position_history=(
+            [positions.tolist() for positions in optimizaiton_result.swarm_position_history]
+            if optimizaiton_result.swarm_position_history is not None
+            else None
+        ),
     )
 

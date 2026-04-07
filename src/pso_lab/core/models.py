@@ -42,4 +42,5 @@ class OptimizationResult:
     iterations_completed: int
     best_value_history: list[float]
     timing_stats: TimingStats
+    swarm_position_history: list[np.ndarray] | None = None
 

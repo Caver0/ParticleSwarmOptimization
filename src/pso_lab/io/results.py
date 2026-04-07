@@ -28,6 +28,7 @@ def save_result(
         elapsed_time_s: float | None = None,
         iterations_completed: int | None = None,
         best_value_history: list[float] | None = None,
+        swarm_position_history: list[list[list[float]]] | None = None,
         timing_stats: dict | None = None,
 ) -> None:
     """Save PSO optimization result to a JSON file."""
@@ -41,6 +42,7 @@ def save_result(
         "elapsed_time_s": elapsed_time_s,
         "iterations_completed": iterations_completed,
         "best_value_history": best_value_history,
+        "swarm_position_history": swarm_position_history,
         "timing_stats": timing_stats,
         "config":asdict(config),
     }

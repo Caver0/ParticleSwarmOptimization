@@ -108,3 +108,29 @@ def test_optimizer_can_stop_early_by_tolerance():
 
     assert result.best_value <= 1e-2
     assert result.iterations_completed <= config.max_iterations
+
+
+def test_optimizer_tracks_swarm_positions_when_requested():
+    config = PSOConfig(
+        num_particles=12,
+        dimensions=3,
+        max_iterations=15,
+        inertia_weight=0.7,
+        cognitive_coefficient=1.5,
+        social_coefficient=1.5,
+        seed=7,
+        tolerance=0.0,
+        stagnation_patience=None,
+        track_history=True,
+        track_swarm_history=True,
+    )
+
+    objective = build_objective("sphere", dimensions=config.dimensions)
+    optimizer = PSOOptimizer(config=config, objective_function=objective)
+
+    result = optimizer.optimize()
+
+    assert result.swarm_position_history is not None
+    assert len(result.swarm_position_history) == result.iterations_completed + 1
+    assert result.swarm_position_history[0].shape == (config.num_particles, config.dimensions)
+    assert result.swarm_position_history[-1].shape == (config.num_particles, config.dimensions)
