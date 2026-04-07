@@ -1,0 +1,11 @@
+# Dependencias principales
+numpy>=2.1.0
+pandas>=2.2.3
+matplotlib>=3.9.2
+tabulate>=0.9.0
+
+# Comparativa contra la referencia externa
+pyswarm>=0.6
+
+# Tests
+pytest>=8.3.3
