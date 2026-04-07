@@ -34,7 +34,7 @@
         1.1669495225216573,
         0.7378874347209647
     ],
-    "elapsed_time_s": 0.04108780005481094,
+    "elapsed_time_s": 0.04002680000849068,
     "iterations_completed": 100,
     "best_value_history": [
         20.64488814359682,
@@ -140,7 +140,7 @@
     ],
     "swarm_position_history": null,
     "timing_stats": {
-        "total_time_s": 0.04108780005481094,
+        "total_time_s": 0.04002680000849068,
         "fitness_time_s": null,
         "velocity_update_time_s": null,
         "position_update_time_s": null,

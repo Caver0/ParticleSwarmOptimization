@@ -1,9 +1,14 @@
 from __future__ import annotations
-
+import sys
+from collections.abc import Sequence
 from time import perf_counter
 
 import numpy as np
 from tabulate import tabulate
+
+from _repo_bootstrap import bootstrap_src_path
+
+bootstrap_src_path()
 
 from pso_lab.cli import parse_pyswarm_baseline_args
 from pso_lab.core.config import PSOConfig
@@ -149,8 +154,8 @@ def _build_delta_rows(
     return delta_rows
 
 
-def main() -> None:
-    args = parse_pyswarm_baseline_args()
+def main(argv: Sequence[str] | None = None) -> None:
+    args = parse_pyswarm_baseline_args(argv)
     logger = setup_logger("pso_pyswarm_baseline")
     try:
         ensure_pyswarm_available()
@@ -271,4 +276,18 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    # Edit these values and press Run in VS Code.
+    vscode_argv = [
+        "--modes", "sequential", "threading", "multiprocessing",
+        "--dimensions", "2", "10", "30",
+        "--objectives", "sphere", "rosenbrock", "rastrigin", "ackley",
+        "--seeds", "0", "1", "2", "3", "4",
+        "--particles", "30",
+        "--iterations", "100",
+        "--inertia", "0.7",
+        "--c1", "1.5",
+        "--c2", "1.5",
+        "--max-workers", "4",
+        "--batch-size", "8",
+    ]
+    main(sys.argv[1:] or vscode_argv)

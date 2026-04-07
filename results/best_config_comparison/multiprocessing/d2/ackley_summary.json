@@ -5,9 +5,10 @@
     "std_best_value": 0.0,
     "min_best_value": 4.440892098500626e-16,
     "max_best_value": 4.440892098500626e-16,
-    "mean_elapsed_time_s": 0.2671471399953589,
-    "std_elapsed_time_s": 0.006890286409221024,
+    "mean_elapsed_time_s": 0.26574170000385494,
+    "std_elapsed_time_s": 0.0023100460551759424,
     "mean_iterations": 100.0,
     "min_iterations": 100,
-    "max_iterations": 100
+    "max_iterations": 100,
+    "evaluation_mode": "multiprocessing"
 }

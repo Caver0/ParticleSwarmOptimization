@@ -6,7 +6,7 @@
         -4.832408557122168e-07,
         2.854387198108752e-06
     ],
-    "elapsed_time_s": 0.014859899994917214,
+    "elapsed_time_s": 0.01434790005441755,
     "iterations_completed": 100,
     "best_value_history": [
         8.572975141156096,
@@ -112,10 +112,10 @@
     ],
     "swarm_position_history": null,
     "timing_stats": {
-        "total_time_s": 0.01485310005955398,
-        "fitness_time_s": 0.01357609941624105,
-        "velocity_update_time_s": 0.0005408000433817506,
-        "position_update_time_s": 0.00025560008361935616
+        "total_time_s": 0.01434340002015233,
+        "fitness_time_s": 0.013194799539633095,
+        "velocity_update_time_s": 0.0005040999967604876,
+        "position_update_time_s": 0.0002269000979140401
     },
     "config": {
         "num_particles": 30,

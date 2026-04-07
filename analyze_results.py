@@ -1,11 +1,18 @@
 from __future__ import annotations
 
 import json
+import sys
+from collections.abc import Sequence
 from pathlib import Path
 
 import pandas as pd
 from tabulate import tabulate
 
+from _repo_bootstrap import bootstrap_src_path
+
+bootstrap_src_path()
+
+from pso_lab.cli import parse_analysis_args
 from pso_lab.io.logging_utils import setup_logger
 from pso_lab.viz.plots import (
     save_baseline_convergence_plots,
@@ -268,28 +275,29 @@ def print_summary_table(df: pd.DataFrame) -> None:
     logger.info("ANALYSIS SUMMARY TABLE\n%s", summary_table)
 
 
-def main() -> None:
+def main(argv: Sequence[str] | None = None) -> None:
+    args = parse_analysis_args(argv)
     logger.info("Starting results analysis")
 
-    df = load_summary_files("results")
+    df = load_summary_files(args.results_dir)
 
     if df.empty:
         logger.warning("No summary data available for analysis")
-        print("No summary data found in results/.")
+        print(f"No summary data found in {args.results_dir}/.")
         return
 
     logger.info("Loaded %d summary rows", len(df))
 
     print_summary_table(df)
 
-    plots_dir = Path("reports") / "plots"
+    plots_dir = Path(args.plots_dir)
     save_time_plot(df, plots_dir)
     save_best_value_plot(df, plots_dir)
     save_time_vs_quality_scatter(df, plots_dir)
     save_grid_search_heatmaps(df, plots_dir)
-    history_df = load_history_files("results", source="best_config_comparison")
+    history_df = load_history_files(args.results_dir, source="best_config_comparison")
     save_convergence_plots(history_df, plots_dir)
-    baseline_history_df = load_history_files("results", source="pyswarm_baseline")
+    baseline_history_df = load_history_files(args.results_dir, source="pyswarm_baseline")
     save_baseline_convergence_plots(baseline_history_df, plots_dir)
     save_baseline_time_comparison_plot(df, plots_dir)
     save_baseline_time_ratio_plot(df, plots_dir)
@@ -298,4 +306,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    # Edit these values and press Run in VS Code.
+    vscode_argv = [
+        "--results-dir", "results",
+        "--plots-dir", "reports/plots",
+    ]
+    main(sys.argv[1:] or vscode_argv)

@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import sys
+from collections.abc import Sequence
 from pathlib import Path
 
 import numpy as np
 from tabulate import tabulate
+
+from _repo_bootstrap import bootstrap_src_path
+
+bootstrap_src_path()
 
 from pso_lab.cli import parse_visualization_args
 from pso_lab.core.config import PSOConfig
@@ -20,8 +26,8 @@ METHOD_TO_MODE = {
 }
 
 
-def main() -> None:
-    args = parse_visualization_args()
+def main(argv: Sequence[str] | None = None) -> None:
+    args = parse_visualization_args(argv)
     logger = setup_logger("pso_visualizations")
 
     if args.dimension < 3:
@@ -122,4 +128,20 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    # Edit these values and press Run in VS Code.
+    vscode_argv = [
+        "--methods", "v1", "v2", "v3",
+        "--dimension", "3",
+        "--objectives", "sphere", "rosenbrock", "rastrigin", "ackley",
+        "--particles", "30",
+        "--iterations", "100",
+        "--inertia", "0.7",
+        "--c1", "1.5",
+        "--c2", "1.5",
+        "--seed", "42",
+        "--max-workers", "4",
+        "--batch-size", "8",
+        "--results-dir", "results/visualization",
+        "--output-dir", "reports/plots",
+    ]
+    main(sys.argv[1:] or vscode_argv)

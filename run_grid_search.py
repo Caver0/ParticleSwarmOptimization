@@ -1,8 +1,14 @@
 from __future__ import annotations
+import sys
+from collections.abc import Sequence
 from itertools import product
 from time import perf_counter
 
 from tabulate import tabulate
+
+from _repo_bootstrap import bootstrap_src_path
+
+bootstrap_src_path()
 
 from pso_lab.cli import parse_grid_search_args
 from pso_lab.core.config import PSOConfig
@@ -11,8 +17,8 @@ from pso_lab.experiments.summary import summarize_experiments
 from pso_lab.io.logging_utils import setup_logger
 from pso_lab.io.results import save_summary
 
-def main() -> None:
-    args = parse_grid_search_args()
+def main(argv: Sequence[str] | None = None) -> None:
+    args = parse_grid_search_args(argv)
     logger = setup_logger("pso_grid_search")
     evaluation_modes = ["v0", "v1", "v2"] if args.mode == "all" else [args.mode]
     objective_names = args.objectives
@@ -210,5 +216,21 @@ def main() -> None:
     print("\n=== GRID SEARCH EXECUTION TIMES ===")
     print(runtime_table)
     logger.info("GRID SEARCH EXECUTION TIMES printed")
+
+
 if __name__ == "__main__":
-    main()
+    # Edit these values and press Run in VS Code.
+    vscode_argv = [
+        "--mode", "all",
+        "--dimensions", "2",
+        "--objectives", "sphere", "rosenbrock", "rastrigin", "ackley",
+        "--seeds", "0", "1", "2", "3", "4",
+        "--particles", "30",
+        "--iterations", "100",
+        "--inertia-values", "0.4", "0.7", "0.9",
+        "--c1-values", "1.0", "1.5", "2.0",
+        "--c2-values", "1.0", "1.5", "2.0",
+        "--max-workers", "4",
+        "--batch-size", "8",
+    ]
+    main(sys.argv[1:] or vscode_argv)

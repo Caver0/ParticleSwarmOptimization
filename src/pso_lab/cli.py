@@ -20,12 +20,14 @@ VISUALIZATION_METHOD_CHOICES = ("v1", "v2", "v3")
 DEFAULT_BENCHMARK_DIMENSIONS = (2, 10, 30)
 DEFAULT_SINGLE_DIMENSION_LIST = (2,)
 DEFAULT_OBJECTIVES = OBJECTIVE_CHOICES
+DEFAULT_SINGLE_RUN_OBJECTIVE = "sphere"
 DEFAULT_SEEDS = (0, 1, 2, 3, 4)
 DEFAULT_PARTICLES = 30
 DEFAULT_ITERATIONS = 100
 DEFAULT_INERTIA = 0.7
 DEFAULT_C1 = 1.5
 DEFAULT_C2 = 1.5
+DEFAULT_SINGLE_RUN_TOLERANCE = 1e-8
 DEFAULT_MAX_WORKERS = 4
 DEFAULT_BATCH_SIZE = 8
 DEFAULT_GRID_INERTIA_VALUES = (0.4, 0.7, 0.9)
@@ -34,6 +36,9 @@ DEFAULT_GRID_C2_VALUES = (1.0, 1.5, 2.0)
 DEFAULT_VISUALIZATION_METHODS = VISUALIZATION_METHOD_CHOICES
 DEFAULT_VISUALIZATION_DIMENSION = 3
 DEFAULT_VISUALIZATION_SEED = 42
+DEFAULT_SINGLE_RUN_OUTPUT_PATH = "results/sphere_run.json"
+DEFAULT_ANALYSIS_RESULTS_DIR = "results"
+DEFAULT_ANALYSIS_PLOTS_DIR = "reports/plots"
 DEFAULT_RESULTS_DIR = "results/visualization"
 DEFAULT_OUTPUT_DIR = "reports/plots"
 
@@ -97,6 +102,20 @@ def _add_objectives_argument(
         "--objectives",
         nargs="+",
         default=list(default),
+        choices=OBJECTIVE_CHOICES,
+        help=help_text,
+    )
+
+
+def _add_objective_argument(
+    parser: argparse.ArgumentParser,
+    *,
+    default: str = DEFAULT_SINGLE_RUN_OBJECTIVE,
+    help_text: str,
+) -> None:
+    parser.add_argument(
+        "--objective",
+        default=default,
         choices=OBJECTIVE_CHOICES,
         help=help_text,
     )
@@ -172,6 +191,20 @@ def _add_c2_argument(parser: argparse.ArgumentParser, *, help_text: str) -> None
         "--c2",
         type=float,
         default=DEFAULT_C2,
+        help=help_text,
+    )
+
+
+def _add_tolerance_argument(
+    parser: argparse.ArgumentParser,
+    *,
+    default: float = DEFAULT_SINGLE_RUN_TOLERANCE,
+    help_text: str,
+) -> None:
+    parser.add_argument(
+        "--tolerance",
+        type=float,
+        default=default,
         help=help_text,
     )
 
@@ -258,6 +291,54 @@ def _add_output_dir_argument(parser: argparse.ArgumentParser) -> None:
         default=DEFAULT_OUTPUT_DIR,
         help="Directory where plot images will be saved.",
     )
+
+
+def _add_output_path_argument(
+    parser: argparse.ArgumentParser,
+    *,
+    default: str = DEFAULT_SINGLE_RUN_OUTPUT_PATH,
+    help_text: str,
+) -> None:
+    parser.add_argument(
+        "--output-path",
+        default=default,
+        help=help_text,
+    )
+
+
+def build_single_run_parser() -> argparse.ArgumentParser:
+    parser = _build_parser("Run a single PSO optimization instance.")
+    _add_objective_argument(
+        parser,
+        help_text="Objective function to optimize.",
+    )
+    _add_dimension_argument(
+        parser,
+        default=DEFAULT_SINGLE_DIMENSION_LIST[0],
+        help_text="Problem dimension.",
+    )
+    _add_particles_argument(parser, help_text="Number of particles in the swarm.")
+    _add_iterations_argument(parser, help_text="Maximum number of PSO iterations.")
+    _add_inertia_argument(parser, help_text="Inertia weight (w).")
+    _add_c1_argument(parser, help_text="Cognitive coefficient (c1).")
+    _add_c2_argument(parser, help_text="Social coefficient (c2).")
+    _add_seed_argument(
+        parser,
+        help_text="Random seed used for the run.",
+    )
+    _add_tolerance_argument(
+        parser,
+        help_text="Stopping tolerance for the best objective value.",
+    )
+    _add_output_path_argument(
+        parser,
+        help_text="Output JSON file for the optimization result.",
+    )
+    return parser
+
+
+def parse_single_run_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    return build_single_run_parser().parse_args(argv)
 
 
 def build_benchmarks_parser() -> argparse.ArgumentParser:
@@ -462,3 +543,22 @@ def build_visualization_parser() -> argparse.ArgumentParser:
 
 def parse_visualization_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return build_visualization_parser().parse_args(argv)
+
+
+def build_analysis_parser() -> argparse.ArgumentParser:
+    parser = _build_parser("Analyze generated PSO results and export plots.")
+    parser.add_argument(
+        "--results-dir",
+        default=DEFAULT_ANALYSIS_RESULTS_DIR,
+        help="Directory containing generated result files.",
+    )
+    parser.add_argument(
+        "--plots-dir",
+        default=DEFAULT_ANALYSIS_PLOTS_DIR,
+        help="Directory where analysis plots will be saved.",
+    )
+    return parser
+
+
+def parse_analysis_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    return build_analysis_parser().parse_args(argv)

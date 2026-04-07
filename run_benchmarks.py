@@ -1,7 +1,14 @@
 from __future__ import annotations
+import sys
+from collections.abc import Sequence
 from time import perf_counter
+
 import numpy as np
 from tabulate import tabulate
+
+from _repo_bootstrap import bootstrap_src_path
+
+bootstrap_src_path()
 
 from pso_lab.cli import parse_benchmarks_args
 from pso_lab.core.config import PSOConfig
@@ -11,10 +18,9 @@ from pso_lab.io.results import save_summary, save_result
 from pso_lab.io.logging_utils import setup_logger
 
 
-
-def main() -> None: 
+def main(argv: Sequence[str] | None = None) -> None: 
     logger = setup_logger("pso_benchmarks")
-    args = parse_benchmarks_args()
+    args = parse_benchmarks_args(argv)
     all_summaries =[]
     mode_elapsed_times = {}
     total_start = perf_counter()
@@ -139,4 +145,18 @@ def main() -> None:
     
 
 if __name__ == "__main__":
-    main()
+    # Edit these values and press Run in VS Code.
+    vscode_argv = [
+        "--modes", "sequential", "threading", "multiprocessing",
+        "--dimensions", "2", "10", "30",
+        "--objectives", "sphere", "rosenbrock", "rastrigin", "ackley",
+        "--seeds", "0", "1", "2", "3", "4",
+        "--particles", "30",
+        "--iterations", "100",
+        "--inertia", "0.7",
+        "--c1", "1.5",
+        "--c2", "1.5",
+        "--max-workers", "4",
+        "--batch-size", "8",
+    ]
+    main(sys.argv[1:] or vscode_argv)
