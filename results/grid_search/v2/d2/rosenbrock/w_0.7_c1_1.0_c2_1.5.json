@@ -1,13 +1,13 @@
 {
     "objective_name": "rosenbrock",
     "num_runs": 5,
-    "mean_best_value": 6.884138242686886e-06,
-    "std_best_value": 1.3118322659459032e-05,
-    "min_best_value": 1.5917204229373365e-09,
-    "max_best_value": 3.3111939487404405e-05,
-    "mean_elapsed_time_s": 0.26333494000136853,
-    "std_elapsed_time_s": 0.008645873815548318,
-    "mean_iterations": 100.0,
-    "min_iterations": 100,
-    "max_iterations": 100
+    "mean_best_value": 3.1788743822820635e-24,
+    "std_best_value": 6.3559134249538804e-24,
+    "min_best_value": 4.979684464207637e-30,
+    "max_best_value": 1.5890701119751195e-23,
+    "mean_elapsed_time_s": 0.558134979987517,
+    "std_elapsed_time_s": 0.008318080222291918,
+    "mean_iterations": 500.0,
+    "min_iterations": 500,
+    "max_iterations": 500
 }

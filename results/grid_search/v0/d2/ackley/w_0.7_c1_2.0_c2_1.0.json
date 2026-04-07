@@ -1,13 +1,13 @@
 {
     "objective_name": "ackley",
     "num_runs": 5,
-    "mean_best_value": 1.3875418879383262e-05,
-    "std_best_value": 6.977380686262089e-06,
-    "min_best_value": 1.8722223171785402e-06,
-    "max_best_value": 2.3072097559140303e-05,
-    "mean_elapsed_time_s": 0.014370080013759435,
-    "std_elapsed_time_s": 0.00019015656730169894,
-    "mean_iterations": 100.0,
-    "min_iterations": 100,
-    "max_iterations": 100
+    "mean_best_value": 4.440892098500626e-16,
+    "std_best_value": 0.0,
+    "min_best_value": 4.440892098500626e-16,
+    "max_best_value": 4.440892098500626e-16,
+    "mean_elapsed_time_s": 0.07047950001433492,
+    "std_elapsed_time_s": 0.0007413709551785513,
+    "mean_iterations": 500.0,
+    "min_iterations": 500,
+    "max_iterations": 500
 }

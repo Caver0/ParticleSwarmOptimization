@@ -3,11 +3,11 @@
     "num_runs": 5,
     "mean_best_value": 0.19899181141865815,
     "std_best_value": 0.39798362283731625,
-    "min_best_value": 2.0548321783008732e-32,
+    "min_best_value": 5.300375378683475e-149,
     "max_best_value": 0.9949590570932908,
-    "mean_elapsed_time_s": 0.26116298001725224,
-    "std_elapsed_time_s": 0.002264088109788822,
-    "mean_iterations": 100.0,
-    "min_iterations": 100,
-    "max_iterations": 100
+    "mean_elapsed_time_s": 0.5566339799901471,
+    "std_elapsed_time_s": 0.012741097632509715,
+    "mean_iterations": 500.0,
+    "min_iterations": 500,
+    "max_iterations": 500
 }

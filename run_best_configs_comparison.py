@@ -1,74 +1,15 @@
 from __future__ import annotations
-import argparse
 from time import perf_counter
+
 import numpy as np
 from tabulate import tabulate
 
+from pso_lab.cli import parse_best_configs_comparison_args
 from pso_lab.core.config import PSOConfig
 from pso_lab.experiments.runner import run_single_experiment
 from pso_lab.experiments.summary import summarize_experiments
 from pso_lab.io.results import save_result, save_summary
 from pso_lab.io.logging_utils import setup_logger
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Compare the best PSO configurations across evaluation modes."
-    )
-
-    parser.add_argument(
-        "--modes",
-        nargs="+",
-        default=["sequential", "threading", "multiprocessing"],
-        choices=["sequential", "threading", "multiprocessing"],
-        help="Evaluation modes to compare.",
-    )
-    parser.add_argument(
-        "--dimensions",
-        nargs="+",
-        type=int,
-        default=[2],
-        help="Problem dimensions to compare.",
-    )
-    parser.add_argument(
-        "--objectives",
-        nargs="+",
-        default=["sphere", "rosenbrock", "rastrigin", "ackley"],
-        choices=["sphere", "rosenbrock", "rastrigin", "ackley"],
-        help="Objective functions to compare.",
-    )
-    parser.add_argument(
-        "--seeds",
-        nargs="+",
-        type=int,
-        default=[0, 1, 2, 3, 4],
-        help="Random seeds for reproducible runs.",
-    )
-    parser.add_argument(
-        "--particles",
-        type=int,
-        default=30,
-        help="Number of particles in the swarm.",
-    )
-    parser.add_argument(
-        "--iterations",
-        type=int,
-        default=100,
-        help="Maximum number of PSO iterations.",
-    )
-    parser.add_argument(
-        "--max-workers",
-        type=int,
-        default=4,
-        help="Maximum workers for threading/multiprocessing evaluators.",
-    )
-    parser.add_argument(
-        "--batch-size",
-        type=int,
-        default=8,
-        help="Batch size for multiprocessing evaluator.",
-    )
-
-    return parser.parse_args()
 
 
 def get_best_configs() -> dict[int, dict[str, dict[str, float]]]:
@@ -94,7 +35,7 @@ def get_best_configs() -> dict[int, dict[str, dict[str, float]]]:
     }
 
 def main() -> None:
-    args = parse_args()
+    args = parse_best_configs_comparison_args()
     logger = setup_logger("pso_best_config_comparison")
     evaluation_modes = args.modes
     seeds = args.seeds

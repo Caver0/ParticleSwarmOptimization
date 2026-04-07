@@ -1,91 +1,20 @@
 from __future__ import annotations
-import argparse
 from time import perf_counter
+import numpy as np
+from tabulate import tabulate
+
+from pso_lab.cli import parse_benchmarks_args
 from pso_lab.core.config import PSOConfig
 from pso_lab.experiments.runner import run_single_experiment
 from pso_lab.experiments.summary import summarize_experiments
 from pso_lab.io.results import save_summary, save_result
 from pso_lab.io.logging_utils import setup_logger
-from tabulate import tabulate
-import numpy as np
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run PSO benchmarks across evaluation modes, dimensions and objectives.")
-    parser.add_argument(
-        "--modes",
-        nargs="+",
-        default=["sequential", "threading", "multiprocessing"],
-        choices=["sequential", "threading", "multiprocessing"],
-        help="Evaluation modes to benchmark",
 
-    )
-    parser.add_argument(
-        "--dimensions",
-        nargs="+",
-        type=int,
-        default=[2, 10, 30],
-        help="Dimensions to benchmark",
-    )
-    parser.add_argument(
-        "--objectives",
-        nargs="+",
-        default=["sphere", "rosenbrock", "rastrigin", "ackley"],
-        choices=["sphere", "rosenbrock", "rastrigin", "ackley"],
-        help="Objective functions to benchmark",
-    )
-    parser.add_argument(
-        "--seeds",
-        nargs="+",
-        type=int,
-        default=[0, 1, 2, 3, 4],
-        help="Random seeds for benchmarking",
-    )
-    parser.add_argument(
-        "--particles",
-        type=int,
-        default=30,
-        help="Number of particles in the swarm",
-    )
-    parser.add_argument(
-        "--iterations",
-        type=int,
-        default=100,
-        help="Maximum number of iterations",
-    )
-    parser.add_argument(
-        "--inertia",
-        type=float,
-        default=0.7,
-        help="Inertia weight (w)",
-    )
-    parser.add_argument(
-        "--c1",
-        type=float,
-        default=1.5,
-        help="Cognitive coefficient (c1)",
-    )
-    parser.add_argument(
-        "--c2",
-        type=float,
-        default=1.5,
-        help="Social coefficient (c2)",
-    )
-    parser.add_argument(
-        "--max_workers",
-        type=int,
-        default=4,
-        help="Max workers for parallel modes (threading and multiprocessing)",
-    )
-    parser.add_argument(
-        "--batch_size",
-        type=int,
-        default=8,
-        help="Batch size for multiprocessing evaluator",
-    )
-    return parser.parse_args()
+
 def main() -> None: 
     logger = setup_logger("pso_benchmarks")
-    args = parse_args()
+    args = parse_benchmarks_args()
     all_summaries =[]
     mode_elapsed_times = {}
     total_start = perf_counter()

@@ -1,96 +1,18 @@
 from __future__ import annotations
 from itertools import product
 from time import perf_counter
+
 from tabulate import tabulate
-import argparse
+
+from pso_lab.cli import parse_grid_search_args
 from pso_lab.core.config import PSOConfig
 from pso_lab.experiments.runner import run_single_experiment
 from pso_lab.experiments.summary import summarize_experiments
 from pso_lab.io.logging_utils import setup_logger
 from pso_lab.io.results import save_summary
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Run PSO grid search over hyperparameters."
-    )
-
-    parser.add_argument(
-        "--mode",
-        default="all",
-        choices=["all", "v0", "v1", "v2", "sequential", "threading", "multiprocessing"],
-        help="Evaluation mode used during grid search. Use 'all' to run v0, v1 and v2.",
-    )
-    parser.add_argument(
-        "--dimensions",
-        nargs="+",
-        type=int,
-        default=[2],
-        help="Problem dimensions to evaluate.",
-    )
-    parser.add_argument(
-        "--objectives",
-        nargs="+",
-        default=["sphere", "rosenbrock", "rastrigin", "ackley"],
-        choices=["sphere", "rosenbrock", "rastrigin", "ackley"],
-        help="Objective functions to include in the grid search.",
-    )
-    parser.add_argument(
-        "--seeds",
-        nargs="+",
-        type=int,
-        default=[0, 1, 2, 3, 4],
-        help="Random seeds for reproducible runs.",
-    )
-    parser.add_argument(
-        "--particles",
-        type=int,
-        default=30,
-        help="Number of particles in the swarm.",
-    )
-    parser.add_argument(
-        "--iterations",
-        type=int,
-        default=100,
-        help="Maximum number of PSO iterations.",
-    )
-    parser.add_argument(
-        "--inertia-values",
-        nargs="+",
-        type=float,
-        default=[0.4, 0.7, 0.9],
-        help="Grid values for inertia weight w.",
-    )
-    parser.add_argument(
-        "--c1-values",
-        nargs="+",
-        type=float,
-        default=[1.0, 1.5, 2.0],
-        help="Grid values for cognitive coefficient c1.",
-    )
-    parser.add_argument(
-        "--c2-values",
-        nargs="+",
-        type=float,
-        default=[1.0, 1.5, 2.0],
-        help="Grid values for social coefficient c2.",
-    )
-    parser.add_argument(
-        "--max-workers",
-        type=int,
-        default=4,
-        help="Maximum workers for threading/multiprocessing evaluators.",
-    )
-    parser.add_argument(
-        "--batch-size",
-        type=int,
-        default=8,
-        help="Batch size for multiprocessing evaluator.",
-    )
-
-    return parser.parse_args()
-
 def main() -> None:
-    args = parse_args()
+    args = parse_grid_search_args()
     logger = setup_logger("pso_grid_search")
     evaluation_modes = ["v0", "v1", "v2"] if args.mode == "all" else [args.mode]
     objective_names = args.objectives

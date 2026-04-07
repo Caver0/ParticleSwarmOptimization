@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import argparse
 from pathlib import Path
 
 import numpy as np
 from tabulate import tabulate
 
+from pso_lab.cli import parse_visualization_args
 from pso_lab.core.config import PSOConfig
 from pso_lab.experiments.runner import run_single_experiment
 from pso_lab.io.logging_utils import setup_logger
@@ -20,93 +20,8 @@ METHOD_TO_MODE = {
 }
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Generate 2D particle-motion plots for 3D PSO runs."
-    )
-    parser.add_argument(
-        "--methods",
-        nargs="+",
-        default=["v1", "v2", "v3"],
-        choices=["v1", "v2", "v3"],
-        help="Visualization method folders to generate.",
-    )
-    parser.add_argument(
-        "--dimension",
-        type=int,
-        default=3,
-        help="Problem dimension for the visualization run.",
-    )
-    parser.add_argument(
-        "--objectives",
-        nargs="+",
-        default=["sphere", "rosenbrock", "rastrigin", "ackley"],
-        choices=["sphere", "rosenbrock", "rastrigin", "ackley"],
-        help="Objective functions to visualize.",
-    )
-    parser.add_argument(
-        "--particles",
-        type=int,
-        default=30,
-        help="Number of particles in the swarm.",
-    )
-    parser.add_argument(
-        "--iterations",
-        type=int,
-        default=100,
-        help="Maximum number of PSO iterations.",
-    )
-    parser.add_argument(
-        "--inertia",
-        type=float,
-        default=0.7,
-        help="Inertia weight (w).",
-    )
-    parser.add_argument(
-        "--c1",
-        type=float,
-        default=1.5,
-        help="Cognitive coefficient (c1).",
-    )
-    parser.add_argument(
-        "--c2",
-        type=float,
-        default=1.5,
-        help="Social coefficient (c2).",
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="Random seed used in the visualization run.",
-    )
-    parser.add_argument(
-        "--max-workers",
-        type=int,
-        default=4,
-        help="Maximum workers for threading and multiprocessing evaluators.",
-    )
-    parser.add_argument(
-        "--batch-size",
-        type=int,
-        default=8,
-        help="Batch size for the multiprocessing evaluator.",
-    )
-    parser.add_argument(
-        "--results-dir",
-        default="results/visualization",
-        help="Directory where raw visualization runs will be stored.",
-    )
-    parser.add_argument(
-        "--output-dir",
-        default="reports/plots",
-        help="Directory where plot images will be saved.",
-    )
-    return parser.parse_args()
-
-
 def main() -> None:
-    args = parse_args()
+    args = parse_visualization_args()
     logger = setup_logger("pso_visualizations")
 
     if args.dimension < 3:
