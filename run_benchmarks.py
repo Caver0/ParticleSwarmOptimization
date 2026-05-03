@@ -31,6 +31,12 @@ def main(argv: Sequence[str] | None = None) -> None:
     for evaluation_mode in evaluation_modes:
         mode_start = perf_counter()
         logger.info("Running mode=%s", evaluation_mode)
+        if evaluation_mode == "asyncio":
+            logger.info(
+                "Async evaluator delay window (s): min=%.6f | max=%.6f",
+                args.async_min_delay,
+                args.async_max_delay,
+            )
         for dimension in dimensions:
             logger.info("Running dimension d=%d", dimension)
             for objective_name in objectives:
@@ -54,8 +60,10 @@ def main(argv: Sequence[str] | None = None) -> None:
                     result = run_single_experiment(objective_name=objective_name, 
                                                 config=config, 
                                                 evaluation_mode=evaluation_mode, 
-                                                max_workers=args.max_workers if evaluation_mode in {"threading", "multiprocessing"} else None,
-                                                batch_size=args.batch_size if evaluation_mode == "multiprocessing" else None,
+                                                max_workers=args.max_workers,
+                                                batch_size=args.batch_size,
+                                                async_min_delay=args.async_min_delay,
+                                                async_max_delay=args.async_max_delay,
                                                 )
                     results.append(result)
                     save_result(
@@ -64,6 +72,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                         best_value=result.best_value,
                         config=config,
                         objective_name=result.objective_name,
+                        evaluation_mode=result.evaluation_mode,
                         elapsed_time_s=result.elapsed_time_s,
                         iterations_completed=result.iterations_completed,
                         best_value_history=result.best_value_history,
@@ -147,7 +156,7 @@ def main(argv: Sequence[str] | None = None) -> None:
 if __name__ == "__main__":
     # Edit these values and press Run in VS Code.
     vscode_argv = [
-        "--modes", "sequential", "threading", "multiprocessing",
+        "--modes", "sequential", "threading", "multiprocessing", "asyncio",
         "--dimensions", "2", "10", "30",
         "--objectives", "sphere", "rosenbrock", "rastrigin", "ackley",
         "--seeds", "0", "1", "2", "3", "4",
@@ -158,5 +167,7 @@ if __name__ == "__main__":
         "--c2", "1.5",
         "--max-workers", "4",
         "--batch-size", "8",
+        "--async-min-delay", "0.0",
+        "--async-max-delay", "0.0",
     ]
     main(sys.argv[1:] or vscode_argv)

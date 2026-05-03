@@ -4,15 +4,18 @@ import argparse
 from collections.abc import Sequence
 
 
-EVALUATION_MODE_CHOICES = ("sequential", "threading", "multiprocessing")
+EVALUATION_MODE_CHOICES = ("sequential", "threading", "multiprocessing", "asyncio")
 GRID_SEARCH_MODE_CHOICES = (
     "all",
     "v0",
     "v1",
     "v2",
+    "v3",
     "sequential",
     "threading",
     "multiprocessing",
+    "asyncio",
+    "async",
 )
 OBJECTIVE_CHOICES = ("sphere", "rosenbrock", "rastrigin", "ackley")
 VISUALIZATION_METHOD_CHOICES = ("v1", "v2", "v3")
@@ -30,6 +33,8 @@ DEFAULT_C2 = 1.5
 DEFAULT_SINGLE_RUN_TOLERANCE = 1e-8
 DEFAULT_MAX_WORKERS = 4
 DEFAULT_BATCH_SIZE = 8
+DEFAULT_ASYNC_MIN_DELAY = 0.0
+DEFAULT_ASYNC_MAX_DELAY = 0.0
 DEFAULT_GRID_INERTIA_VALUES = (0.4, 0.7, 0.9)
 DEFAULT_GRID_C1_VALUES = (1.0, 1.5, 2.0)
 DEFAULT_GRID_C2_VALUES = (1.0, 1.5, 2.0)
@@ -58,6 +63,21 @@ def _add_modes_argument(
         "--modes",
         nargs="+",
         default=list(default),
+        choices=choices,
+        help=help_text,
+    )
+
+
+def _add_mode_argument(
+    parser: argparse.ArgumentParser,
+    *,
+    default: str,
+    choices: Sequence[str] = EVALUATION_MODE_CHOICES,
+    help_text: str,
+) -> None:
+    parser.add_argument(
+        "--mode",
+        default=default,
         choices=choices,
         help=help_text,
     )
@@ -267,6 +287,21 @@ def _add_batch_size_argument(
     )
 
 
+def _add_async_delay_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--async-min-delay",
+        type=float,
+        default=DEFAULT_ASYNC_MIN_DELAY,
+        help="Minimum artificial delay per particle for the asyncio evaluator.",
+    )
+    parser.add_argument(
+        "--async-max-delay",
+        type=float,
+        default=DEFAULT_ASYNC_MAX_DELAY,
+        help="Maximum artificial delay per particle for the asyncio evaluator.",
+    )
+
+
 def _add_methods_argument(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--methods",
@@ -308,6 +343,11 @@ def _add_output_path_argument(
 
 def build_single_run_parser() -> argparse.ArgumentParser:
     parser = _build_parser("Run a single PSO optimization instance.")
+    _add_mode_argument(
+        parser,
+        default="sequential",
+        help_text="Evaluation mode used to compute particle fitness.",
+    )
     _add_objective_argument(
         parser,
         help_text="Objective function to optimize.",
@@ -334,6 +374,17 @@ def build_single_run_parser() -> argparse.ArgumentParser:
         parser,
         help_text="Output JSON file for the optimization result.",
     )
+    _add_max_workers_argument(
+        parser,
+        flags=("--max_workers", "--max-workers"),
+        help_text="Maximum workers for threading and multiprocessing evaluators.",
+    )
+    _add_batch_size_argument(
+        parser,
+        flags=("--batch_size", "--batch-size"),
+        help_text="Batch size for the multiprocessing evaluator.",
+    )
+    _add_async_delay_arguments(parser)
     return parser
 
 
@@ -378,6 +429,7 @@ def build_benchmarks_parser() -> argparse.ArgumentParser:
         flags=("--batch_size", "--batch-size"),
         help_text="Batch size for multiprocessing evaluator",
     )
+    _add_async_delay_arguments(parser)
     return parser
 
 
@@ -391,7 +443,7 @@ def build_grid_search_parser() -> argparse.ArgumentParser:
         "--mode",
         default="all",
         choices=GRID_SEARCH_MODE_CHOICES,
-        help="Evaluation mode used during grid search. Use 'all' to run v0, v1 and v2.",
+        help="Evaluation mode used during grid search. Use 'all' to run v0, v1, v2 and v3.",
     )
     _add_dimensions_argument(
         parser,
@@ -419,6 +471,7 @@ def build_grid_search_parser() -> argparse.ArgumentParser:
         parser,
         help_text="Batch size for multiprocessing evaluator.",
     )
+    _add_async_delay_arguments(parser)
     return parser
 
 
@@ -456,6 +509,7 @@ def build_best_configs_comparison_parser() -> argparse.ArgumentParser:
         parser,
         help_text="Batch size for multiprocessing evaluator.",
     )
+    _add_async_delay_arguments(parser)
     return parser
 
 
@@ -500,6 +554,7 @@ def build_pyswarm_baseline_parser() -> argparse.ArgumentParser:
         flags=("--batch_size", "--batch-size"),
         help_text="Batch size for the multiprocessing evaluator.",
     )
+    _add_async_delay_arguments(parser)
     return parser
 
 

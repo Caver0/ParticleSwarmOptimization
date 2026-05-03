@@ -12,7 +12,7 @@ import pandas as pd
 from pso_lab.objectives import build_objective
 
 
-MODE_ORDER = ["sequential", "threading", "multiprocessing", "pyswarm"]
+MODE_ORDER = ["sequential", "threading", "multiprocessing", "asyncio", "pyswarm"]
 OBJECTIVE_ORDER = ["sphere", "rosenbrock", "rastrigin", "ackley"]
 METHOD_STYLES = {
     "sequential": {
@@ -35,6 +35,13 @@ METHOD_STYLES = {
         "linestyle": "-.",
         "marker": "^",
         "markevery": (6, 10),
+    },
+    "asyncio": {
+        "label": "v3",
+        "color": "tab:purple",
+        "linestyle": "-",
+        "marker": "P",
+        "markevery": (8, 10),
     },
     "pyswarm": {
         "label": "pyswarm",
@@ -77,6 +84,8 @@ def _normalize_mode_name(mode: str | None) -> str | None:
         "v0": "sequential",
         "v1": "threading",
         "v2": "multiprocessing",
+        "v3": "asyncio",
+        "async": "asyncio",
         "threads": "threading",
         "processes": "multiprocessing",
     }
@@ -325,6 +334,7 @@ def save_time_vs_quality_scatter(df: pd.DataFrame, output_dir: str | Path) -> No
         "sequential": 60,
         "threading": 90,
         "multiprocessing": 120,
+        "asyncio": 105,
     }
 
     plt.figure(figsize=(12, 8))

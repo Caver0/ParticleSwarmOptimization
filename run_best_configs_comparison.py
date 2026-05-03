@@ -71,6 +71,12 @@ def main(argv: Sequence[str] | None = None) -> None:
             )
             for evaluation_mode in evaluation_modes:
                 mode_start = perf_counter()
+                if evaluation_mode == "asyncio":
+                    logger.info(
+                        "Async evaluator delay window (s): min=%.6f | max=%.6f",
+                        args.async_min_delay,
+                        args.async_max_delay,
+                    )
                 results = []
 
                 for seed in seeds:
@@ -91,8 +97,10 @@ def main(argv: Sequence[str] | None = None) -> None:
                         objective_name=objective_name,
                         config=config,
                         evaluation_mode=evaluation_mode,
-                        max_workers=args.max_workers if evaluation_mode in {"threading", "multiprocessing"} else None,
-                        batch_size=args.batch_size if evaluation_mode == "multiprocessing" else None,
+                        max_workers=args.max_workers,
+                        batch_size=args.batch_size,
+                        async_min_delay=args.async_min_delay,
+                        async_max_delay=args.async_max_delay,
                     )
 
                     results.append(result)
@@ -195,7 +203,7 @@ def main(argv: Sequence[str] | None = None) -> None:
 if __name__ == "__main__":
     # Edit these values and press Run in VS Code.
     vscode_argv = [
-        "--modes", "sequential", "threading", "multiprocessing",
+        "--modes", "sequential", "threading", "multiprocessing", "asyncio",
         "--dimensions", "2",
         "--objectives", "sphere", "rosenbrock", "rastrigin", "ackley",
         "--seeds", "0", "1", "2", "3", "4",
@@ -203,5 +211,7 @@ if __name__ == "__main__":
         "--iterations", "100",
         "--max-workers", "4",
         "--batch-size", "8",
+        "--async-min-delay", "0.0",
+        "--async-max-delay", "0.0",
     ]
     main(sys.argv[1:] or vscode_argv)

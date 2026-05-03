@@ -18,7 +18,8 @@ ParticleSwarmOptimization/
 │       │   ├── benchmarks.py      # Sphere, Rosenbrock, Rastrigin and Ackley
 │       │   └── __init__.py        # build_objective(...) factory
 │       ├── parallel/
-│       │   └── evaluators.py      # Sequential, threading and multiprocessing evaluation
+│       │   ├── evaluators.py      # Sequential, threading and multiprocessing evaluation
+│       │   └── async_evaluator.py # Asyncio evaluation with optional artificial delay
 │       ├── experiments/
 │       │   ├── runner.py          # Runs a complete execution with the selected mode
 │       │   ├── summary.py         # Summarizes multiple executions into means, minimums and maximums
@@ -52,7 +53,7 @@ ParticleSwarmOptimization/
 
 `src/pso_lab/objectives` groups the objective functions. They are separated from the optimizer so that the algorithm can be reused for other problems without mixing swarm logic with benchmark logic.
 
-`src/pso_lab/parallel` encapsulates fitness evaluation. This separation is important because it allows comparing `sequential`, `threading`, and `multiprocessing` without rewriting the rest of the algorithm.
+`src/pso_lab/parallel` encapsulates fitness evaluation. This separation is important because it allows comparing `sequential`, `threading`, `multiprocessing`, and `asyncio` without rewriting the rest of the algorithm.
 
 `src/pso_lab/experiments` is the layer that connects everything: it launches complete executions, summarizes multiple seeds, and prepares the comparison against `pyswarm`.
 
@@ -64,7 +65,7 @@ ParticleSwarmOptimization/
 
 ## What each executable provides
 
-`run_pso.py` is the minimum execution. It is used to quickly check that the algorithm converges, that the history is saved correctly, and that the basic pipeline is healthy.
+`run_pso.py` is the minimum execution. It is used to quickly check that the algorithm converges, that the history is saved correctly, and that the basic pipeline is healthy. It now accepts `--mode`, so the same entrypoint can run `sequential`, `threading`, `multiprocessing`, or `asyncio`.
 
 `run_benchmarks.py` is the most direct experiment to compare evaluation modes while keeping everything else fixed. The important thing here is not to search for the best configuration, but to isolate the evaluator cost.
 
@@ -75,6 +76,25 @@ ParticleSwarmOptimization/
 `run_pyswarm_baseline.py` compares the project implementation against an external reference. Useful to see whether it really adds value.
 
 `analyze_results.py` and `make_viz.py` close the workflow. One summarizes and plots.
+
+## V3 Asyncio
+
+V3 adds an `asyncio` evaluator that keeps the same contract as the other evaluators: the PSO core still calls `evaluate(objective_function, positions)` and still receives an `np.ndarray` of fitness values. The difference is only in how the fitness evaluations are scheduled.
+
+This mode is designed for I/O-bound or latency-bound scenarios. A configurable artificial delay per particle was added to simulate cases such as API calls, database queries, or external services. The delay is sampled in a reproducible way from the evaluator itself, so the objective interface does not need to become asynchronous.
+
+For purely CPU-bound objectives, no speedup is expected. `asyncio` does not reduce the numerical computation cost of `Sphere`, `Rastrigin`, `Rosenbrock`, or `Ackley`; it only allows cooperative overlap when the evaluation includes waiting time.
+
+Useful examples:
+
+```bash
+python run_pso.py --objective sphere --dimension 2 --mode asyncio --seed 42
+python run_benchmarks.py --modes asyncio --dimensions 2 10 --objectives sphere rastrigin --seeds 0 1
+python run_benchmarks.py --modes asyncio --dimensions 2 --objectives sphere --seeds 0 1 --async-min-delay 0.01 --async-max-delay 0.05
+python run_grid_search.py --mode asyncio --dimensions 2 --objectives sphere --seeds 0
+```
+
+When `--async-min-delay` and `--async-max-delay` are both `0.0`, the evaluator behaves as a no-delay async baseline. When they are greater than zero, each particle gets its own sampled delay, which makes the benchmark more representative of asymmetric waiting times.
 
 ## Results obtained
 
@@ -137,7 +157,7 @@ Convergence plots and particle movement plots help put a face to the numbers. In
 
 If the project had to be summarized in one simple idea, it would be this: for lightweight, CPU-bound objective functions, parallelizing in Python does not always help, and sometimes it makes total execution time significantly worse. In this repository, with this workload, `sequential` is the most reasonable option.
 
-That does not make `threading` or `multiprocessing` useless. It simply means that here they were not playing on favorable ground. If the fitness were much more expensive, if there were blocking calls, or if the evaluation relied more heavily on libraries that release the GIL, the story could change.
+That does not make `threading`, `multiprocessing`, or `asyncio` useless. It simply means that here they were not playing on favorable ground. If the fitness were much more expensive, if there were blocking calls, or if the evaluation relied more heavily on libraries that release the GIL, the story could change.
 
 ## Usage note
 
