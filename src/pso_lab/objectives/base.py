@@ -24,3 +24,7 @@ class ObjectiveFunction:
     # and returns a NumPy array of fitness values.
     def evaluate_many(self, positions: np.ndarray) -> np.ndarray:
         return np.asarray([self(position) for position in positions], dtype=float)
+
+    def evaluate_batch(self, positions: np.ndarray) -> np.ndarray:
+        """Evaluate the objective over a batch of particle positions."""
+        return self.evaluate_many(positions)

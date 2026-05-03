@@ -1,12 +1,12 @@
 {
     "objective": "sphere",
-    "evaluation_mode": null,
+    "evaluation_mode": "sequential",
     "best_value": 7.2221949537478e-15,
     "best_position": [
         8.36702044195826e-08,
         -1.4882602129098965e-08
     ],
-    "elapsed_time_s": 0.0067680999636650085,
+    "elapsed_time_s": 0.006436499999836087,
     "iterations_completed": 100,
     "best_value_history": [
         1.5625586986727873,
@@ -112,10 +112,10 @@
     ],
     "swarm_position_history": null,
     "timing_stats": {
-        "total_time_s": 0.00675609998870641,
-        "fitness_time_s": 0.0054806992411613464,
-        "velocity_update_time_s": 0.0005285002989694476,
-        "position_update_time_s": 0.0002674001734703779
+        "total_time_s": 0.006426600011764094,
+        "fitness_time_s": 0.005196800047997385,
+        "velocity_update_time_s": 0.0005291001289151609,
+        "position_update_time_s": 0.0002416999195702374
     },
     "config": {
         "num_particles": 30,

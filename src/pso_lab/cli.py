@@ -4,18 +4,28 @@ import argparse
 from collections.abc import Sequence
 
 
-EVALUATION_MODE_CHOICES = ("sequential", "threading", "multiprocessing", "asyncio")
+EVALUATION_MODE_CHOICES = (
+    "sequential",
+    "threading",
+    "multiprocessing",
+    "asyncio",
+    "vectorized",
+)
 GRID_SEARCH_MODE_CHOICES = (
     "all",
     "v0",
     "v1",
     "v2",
     "v3",
+    "v4",
     "sequential",
     "threading",
     "multiprocessing",
     "asyncio",
     "async",
+    "vectorized",
+    "vectorised",
+    "numpy",
 )
 OBJECTIVE_CHOICES = ("sphere", "rosenbrock", "rastrigin", "ackley")
 VISUALIZATION_METHOD_CHOICES = ("v1", "v2", "v3")
@@ -443,7 +453,7 @@ def build_grid_search_parser() -> argparse.ArgumentParser:
         "--mode",
         default="all",
         choices=GRID_SEARCH_MODE_CHOICES,
-        help="Evaluation mode used during grid search. Use 'all' to run v0, v1, v2 and v3.",
+        help="Evaluation mode used during grid search. Use 'all' to run v0, v1, v2, v3 and v4.",
     )
     _add_dimensions_argument(
         parser,

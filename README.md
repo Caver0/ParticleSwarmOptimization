@@ -18,8 +18,9 @@ ParticleSwarmOptimization/
 │       │   ├── benchmarks.py      # Sphere, Rosenbrock, Rastrigin and Ackley
 │       │   └── __init__.py        # build_objective(...) factory
 │       ├── parallel/
-│       │   ├── evaluators.py      # Sequential, threading and multiprocessing evaluation
-│       │   └── async_evaluator.py # Asyncio evaluation with optional artificial delay
+│       │   ├── evaluators.py          # Sequential, threading and multiprocessing evaluation
+│       │   ├── async_evaluator.py     # Asyncio evaluation with optional artificial delay
+│       │   └── vectorized_evaluator.py # NumPy batch evaluation
 │       ├── experiments/
 │       │   ├── runner.py          # Runs a complete execution with the selected mode
 │       │   ├── summary.py         # Summarizes multiple executions into means, minimums and maximums
@@ -53,7 +54,7 @@ ParticleSwarmOptimization/
 
 `src/pso_lab/objectives` groups the objective functions. They are separated from the optimizer so that the algorithm can be reused for other problems without mixing swarm logic with benchmark logic.
 
-`src/pso_lab/parallel` encapsulates fitness evaluation. This separation is important because it allows comparing `sequential`, `threading`, `multiprocessing`, and `asyncio` without rewriting the rest of the algorithm.
+`src/pso_lab/parallel` encapsulates fitness evaluation. This separation is important because it allows comparing `sequential`, `threading`, `multiprocessing`, `asyncio`, and `vectorized` without rewriting the rest of the algorithm.
 
 `src/pso_lab/experiments` is the layer that connects everything: it launches complete executions, summarizes multiple seeds, and prepares the comparison against `pyswarm`.
 
@@ -65,7 +66,7 @@ ParticleSwarmOptimization/
 
 ## What each executable provides
 
-`run_pso.py` is the minimum execution. It is used to quickly check that the algorithm converges, that the history is saved correctly, and that the basic pipeline is healthy. It now accepts `--mode`, so the same entrypoint can run `sequential`, `threading`, `multiprocessing`, or `asyncio`.
+`run_pso.py` is the minimum execution. It is used to quickly check that the algorithm converges, that the history is saved correctly, and that the basic pipeline is healthy. It now accepts `--mode`, so the same entrypoint can run `sequential`, `threading`, `multiprocessing`, `asyncio`, or `vectorized`.
 
 `run_benchmarks.py` is the most direct experiment to compare evaluation modes while keeping everything else fixed. The important thing here is not to search for the best configuration, but to isolate the evaluator cost.
 
@@ -95,6 +96,22 @@ python run_grid_search.py --mode asyncio --dimensions 2 --objectives sphere --se
 ```
 
 When `--async-min-delay` and `--async-max-delay` are both `0.0`, the evaluator behaves as a no-delay async baseline. When they are greater than zero, each particle gets its own sampled delay, which makes the benchmark more representative of asymmetric waiting times.
+
+## V4 Vectorized / NumPy
+
+V4 adds a `vectorized` evaluator that keeps the same public contract as the other evaluators: `evaluate(objective_function, positions) -> np.ndarray`. Instead of creating explicit workers, it tries to evaluate the whole swarm through `objective_function.evaluate_batch(positions)` when that batch API is available.
+
+This is a form of implicit parallelism through NumPy. The work is still launched from one Python process, but most of the heavy numerical operations move into optimized array kernels. For cheap and vectorizable objectives, this can be more efficient than `threading` or `multiprocessing` because it avoids Python loops, thread coordination, process startup, IPC, and serialization overhead.
+
+If an objective does not implement `evaluate_batch`, `VectorizedEvaluator` falls back automatically to a compatible sequential loop. That means V4 does not require a new PSO core and does not break custom objectives that only implement `__call__`.
+
+Useful examples:
+
+```bash
+python run_pso.py --objective sphere --dimension 2 --mode vectorized --seed 42
+python run_benchmarks.py --modes vectorized --dimensions 2 10 30 --objectives sphere rastrigin --seeds 0 1
+python run_grid_search.py --mode vectorized --dimensions 2 --objectives sphere --seeds 0 1
+```
 
 ## Results obtained
 
@@ -157,7 +174,7 @@ Convergence plots and particle movement plots help put a face to the numbers. In
 
 If the project had to be summarized in one simple idea, it would be this: for lightweight, CPU-bound objective functions, parallelizing in Python does not always help, and sometimes it makes total execution time significantly worse. In this repository, with this workload, `sequential` is the most reasonable option.
 
-That does not make `threading`, `multiprocessing`, or `asyncio` useless. It simply means that here they were not playing on favorable ground. If the fitness were much more expensive, if there were blocking calls, or if the evaluation relied more heavily on libraries that release the GIL, the story could change.
+That does not make `threading`, `multiprocessing`, `asyncio`, or `vectorized` useless. It simply means that here they were not playing on favorable ground. If the fitness were much more expensive, if there were blocking calls, or if the evaluation relied more heavily on libraries that release the GIL, the story could change.
 
 ## Usage note
 

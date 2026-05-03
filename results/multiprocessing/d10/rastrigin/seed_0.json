@@ -1,6 +1,6 @@
 {
     "objective": "rastrigin",
-    "evaluation_mode": null,
+    "evaluation_mode": "multiprocessing",
     "best_value": 12.629445921782487,
     "best_position": [
         -0.9262778431768792,
@@ -14,7 +14,7 @@
         -1.0091110865189072,
         -0.0025507898006777788
     ],
-    "elapsed_time_s": 0.2624257999705151,
+    "elapsed_time_s": 0.2608225000149105,
     "iterations_completed": 100,
     "best_value_history": [
         107.95451954604201,
@@ -120,10 +120,10 @@
     ],
     "swarm_position_history": null,
     "timing_stats": {
-        "total_time_s": 0.26241889991797507,
-        "fitness_time_s": 0.25717400026042014,
-        "velocity_update_time_s": 0.0018651994178071618,
-        "position_update_time_s": 0.0007905005477368832
+        "total_time_s": 0.26081629999680445,
+        "fitness_time_s": 0.2556974999315571,
+        "velocity_update_time_s": 0.001954899897100404,
+        "position_update_time_s": 0.0008134000818245113
     },
     "config": {
         "num_particles": 30,

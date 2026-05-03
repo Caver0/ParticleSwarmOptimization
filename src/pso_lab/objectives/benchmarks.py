@@ -8,6 +8,10 @@ from .base import ObjectiveFunction
 class SphereObjective(ObjectiveFunction):
     def __call__(self, x: np.ndarray) -> float:
         return float(np.sum(np.square(x)))
+
+    def evaluate_batch(self, positions: np.ndarray) -> np.ndarray:
+        positions_array = np.asarray(positions, dtype=float)
+        return np.sum(np.square(positions_array), axis=1, dtype=float)
     
 
 @dataclass(slots=True)
@@ -18,6 +22,15 @@ class RosenbrockObjective(ObjectiveFunction):
                 100.0 * np.square(x[1:] - np.square(x[:-1])) + np.square(1.0 - x[:-1])
             )
         )
+
+    def evaluate_batch(self, positions: np.ndarray) -> np.ndarray:
+        positions_array = np.asarray(positions, dtype=float)
+        return np.sum(
+            100.0 * np.square(positions_array[:, 1:] - np.square(positions_array[:, :-1]))
+            + np.square(1.0 - positions_array[:, :-1]),
+            axis=1,
+            dtype=float,
+        )
     
 
 @dataclass(slots=True)
@@ -27,6 +40,11 @@ class RastriginObjective(ObjectiveFunction):
         # to avoid catastrophic cancellation near the global optimum.
         oscillation = 1.0 - np.cos(2.0 * np.pi * x)
         return float(np.sum(np.square(x) + 10.0 * oscillation))
+
+    def evaluate_batch(self, positions: np.ndarray) -> np.ndarray:
+        positions_array = np.asarray(positions, dtype=float)
+        oscillation = 1.0 - np.cos(2.0 * np.pi * positions_array)
+        return np.sum(np.square(positions_array) + 10.0 * oscillation, axis=1, dtype=float)
     
 @dataclass(slots=True)
 class AckleyObjective(ObjectiveFunction):
@@ -40,6 +58,21 @@ class AckleyObjective(ObjectiveFunction):
         term1 = -a * np.exp(-b * np.sqrt(sum_sq/d))
         term2 = -np.exp(cos_sum/d)
         return float(term1 + term2 + a + np.e)
+
+    def evaluate_batch(self, positions: np.ndarray) -> np.ndarray:
+        positions_array = np.asarray(positions, dtype=float)
+        a = 20.0
+        b = 0.2
+        c = 2.0 * np.pi
+        d = positions_array.shape[1]
+        sum_sq = np.sum(np.square(positions_array), axis=1, dtype=float)
+        sum_cos = np.sum(np.cos(c * positions_array), axis=1, dtype=float)
+        return (
+            -a * np.exp(-b * np.sqrt(sum_sq / d))
+            - np.exp(sum_cos / d)
+            + a
+            + np.e
+        )
 
 def _uniform_bounds(dimensions: int, lower:float, upper:float) -> list[tuple[float, float]]:
     return [(lower ,upper) for _ in range(dimensions)]

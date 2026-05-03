@@ -203,7 +203,7 @@ def main(argv: Sequence[str] | None = None) -> None:
 if __name__ == "__main__":
     # Edit these values and press Run in VS Code.
     vscode_argv = [
-        "--modes", "sequential", "threading", "multiprocessing", "asyncio",
+        "--modes", "sequential", "threading", "multiprocessing", "asyncio", "vectorized",
         "--dimensions", "2",
         "--objectives", "sphere", "rosenbrock", "rastrigin", "ackley",
         "--seeds", "0", "1", "2", "3", "4",

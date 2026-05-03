@@ -20,7 +20,7 @@ from pso_lab.io.results import save_summary
 def main(argv: Sequence[str] | None = None) -> None:
     args = parse_grid_search_args(argv)
     logger = setup_logger("pso_grid_search")
-    evaluation_modes = ["v0", "v1", "v2", "v3"] if args.mode == "all" else [args.mode]
+    evaluation_modes = ["v0", "v1", "v2", "v3", "v4"] if args.mode == "all" else [args.mode]
     objective_names = args.objectives
     dimensions = args.dimensions
     seeds = args.seeds

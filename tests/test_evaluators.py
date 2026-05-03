@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from pso_lab.core.config import PSOConfig
 from pso_lab.experiments.runner import build_evaluator, run_single_experiment
@@ -10,6 +11,36 @@ from pso_lab.parallel.evaluators import (
     SequentialEvaluator,
     ThreadPoolEvaluator,
 )
+from pso_lab.parallel.vectorized_evaluator import VectorizedEvaluator
+
+
+class BatchObjective:
+    def __init__(self) -> None:
+        self.batch_called = False
+
+    def __call__(self, x: np.ndarray) -> float:
+        return float(np.sum(np.square(x)))
+
+    def evaluate_batch(self, positions: np.ndarray) -> np.ndarray:
+        self.batch_called = True
+        return np.sum(np.square(positions), axis=1)
+
+
+class NoBatchObjective:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def __call__(self, x: np.ndarray) -> float:
+        self.calls += 1
+        return float(np.sum(np.square(x)))
+
+
+class WrongShapeBatchObjective:
+    def __call__(self, x: np.ndarray) -> float:
+        return float(np.sum(np.square(x)))
+
+    def evaluate_batch(self, positions: np.ndarray) -> np.ndarray:
+        return np.sum(np.square(positions), axis=0)
 
 
 def test_sequential_evaluator_matches_objective_evaluate_many() -> None:
@@ -114,6 +145,77 @@ def test_async_evaluator_with_delay_returns_correct_values() -> None:
     assert np.all(evaluator.last_delays <= 0.003)
 
 
+def test_vectorized_evaluator_returns_numpy_array_with_particle_count_length() -> None:
+    objective = BatchObjective()
+    positions = np.array(
+        [
+            [0.0, 0.0],
+            [1.0, 2.0],
+            [-3.0, 4.0],
+            [0.5, -1.5],
+        ],
+        dtype=float,
+    )
+    evaluator = VectorizedEvaluator()
+
+    obtained = evaluator.evaluate(objective, positions)
+
+    assert isinstance(obtained, np.ndarray)
+    assert obtained.shape == (positions.shape[0],)
+
+
+def test_vectorized_evaluator_uses_evaluate_batch_when_available() -> None:
+    objective = BatchObjective()
+    positions = np.array(
+        [
+            [0.0, 0.0],
+            [1.0, 2.0],
+            [-3.0, 4.0],
+        ],
+        dtype=float,
+    )
+    evaluator = VectorizedEvaluator()
+
+    obtained = evaluator.evaluate(objective, positions)
+
+    assert objective.batch_called is True
+    assert np.allclose(obtained, np.sum(np.square(positions), axis=1))
+
+
+def test_vectorized_evaluator_falls_back_to_sequential_when_no_batch_exists() -> None:
+    objective = NoBatchObjective()
+    positions = np.array(
+        [
+            [0.0, 0.0],
+            [1.0, 2.0],
+            [-3.0, 4.0],
+        ],
+        dtype=float,
+    )
+    evaluator = VectorizedEvaluator()
+
+    obtained = evaluator.evaluate(objective, positions)
+
+    assert objective.calls == positions.shape[0]
+    assert np.allclose(obtained, np.sum(np.square(positions), axis=1))
+
+
+def test_vectorized_evaluator_raises_when_batch_shape_is_invalid() -> None:
+    objective = WrongShapeBatchObjective()
+    positions = np.array(
+        [
+            [0.0, 0.0],
+            [1.0, 2.0],
+            [-3.0, 4.0],
+        ],
+        dtype=float,
+    )
+    evaluator = VectorizedEvaluator()
+
+    with pytest.raises(ValueError, match="VectorizedEvaluator expected fitness values with shape"):
+        evaluator.evaluate(objective, positions)
+
+
 def test_uniform_delay_sampler_is_reproducible_with_seed() -> None:
     sampler_a = UniformDelaySampler(min_delay=0.01, max_delay=0.05, seed=11)
     sampler_b = UniformDelaySampler(min_delay=0.01, max_delay=0.05, seed=11)
@@ -150,6 +252,16 @@ def test_build_evaluator_returns_asyncio() -> None:
         assert isinstance(evaluator, AsyncEvaluator)
     finally:
         evaluator.shutdown()
+
+
+def test_build_evaluator_returns_vectorized() -> None:
+    evaluator = build_evaluator(mode="vectorized")
+    assert isinstance(evaluator, VectorizedEvaluator)
+
+
+def test_build_evaluator_accepts_vectorized_aliases() -> None:
+    assert isinstance(build_evaluator(mode="v4"), VectorizedEvaluator)
+    assert isinstance(build_evaluator(mode="numpy"), VectorizedEvaluator)
 
 
 def test_run_single_experiment_threading_returns_valid_result() -> None:
@@ -236,6 +348,35 @@ def test_run_single_experiment_asyncio_returns_valid_result() -> None:
 
     assert result.objective_name == "sphere"
     assert result.evaluation_mode == "asyncio"
+    assert isinstance(result.best_value, float)
+    assert isinstance(result.best_position, list)
+    assert len(result.best_value_history) == result.iterations_completed
+    assert len(result.best_position) == config.dimensions
+    assert result.iterations_completed > 0
+
+
+def test_run_single_experiment_vectorized_returns_valid_result() -> None:
+    config = PSOConfig(
+        num_particles=12,
+        dimensions=2,
+        max_iterations=20,
+        inertia_weight=0.7,
+        cognitive_coefficient=1.5,
+        social_coefficient=1.5,
+        seed=0,
+        tolerance=0.0,
+        stagnation_patience=None,
+        track_history=True,
+    )
+
+    result = run_single_experiment(
+        objective_name="sphere",
+        config=config,
+        evaluation_mode="vectorized",
+    )
+
+    assert result.objective_name == "sphere"
+    assert result.evaluation_mode == "vectorized"
     assert isinstance(result.best_value, float)
     assert isinstance(result.best_position, list)
     assert len(result.best_value_history) == result.iterations_completed

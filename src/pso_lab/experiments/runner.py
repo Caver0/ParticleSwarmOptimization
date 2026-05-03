@@ -13,6 +13,7 @@ from pso_lab.parallel.evaluators import (
     SequentialEvaluator,
     ThreadPoolEvaluator,
 )
+from pso_lab.parallel.vectorized_evaluator import VectorizedEvaluator
 
 
 @dataclass(slots=True)
@@ -55,6 +56,8 @@ def build_evaluator(
             max_delay=async_max_delay,
             seed=async_seed,
         )
+    if normalized_mode in {"vectorized", "vectorised", "numpy", "v4"}:
+        return VectorizedEvaluator()
 
     raise ValueError(f"Modo de evaluación desconocido: {mode}")
 
