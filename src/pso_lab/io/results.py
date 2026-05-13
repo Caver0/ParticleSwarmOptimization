@@ -18,6 +18,16 @@ def _to_serializable(obj: Any) -> Any:
         return asdict(obj)
     return obj
 
+
+def save_json_document(output_path: str | Path, data: Any) -> None:
+    """Save a JSON-serializable document to disk."""
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, default=_to_serializable)
+
 def save_result(
         output_path: str|Path,
         best_position: np.ndarray,
@@ -47,8 +57,7 @@ def save_result(
         "config":asdict(config),
     }
 
-    with open(output_path, "w", encoding = "utf-8") as f:
-        json.dump(result, f, indent = 4, default= _to_serializable)
+    save_json_document(output_path, result)
 
 
 def save_summary(output_path: str|Path, summary: ExperimentSummary, evaluation_mode:str | None = None) -> None:
@@ -60,5 +69,4 @@ def save_summary(output_path: str|Path, summary: ExperimentSummary, evaluation_m
     summary_data =asdict(summary)
     summary_data["evaluation_mode"] = evaluation_mode
 
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(summary_data, f, indent=4, default= _to_serializable)
+    save_json_document(output_path, summary_data)

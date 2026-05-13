@@ -16,6 +16,7 @@ ParticleSwarmOptimization/
 │       ├── objectives/
 │       │   ├── base.py            # Common interface for objective functions
 │       │   ├── benchmarks.py      # Sphere, Rosenbrock, Rastrigin and Ackley
+│       │   ├── nutrition.py       # Practical meal optimization objective
 │       │   └── __init__.py        # build_objective(...) factory
 │       ├── parallel/
 │       │   ├── evaluators.py          # Sequential, threading and multiprocessing evaluation
@@ -37,6 +38,7 @@ ParticleSwarmOptimization/
 │   └── plots/                     # Figures generated from the results
 ├── logs/                          # Timestamped execution logs
 ├── run_pso.py                     # Single PSO execution
+├── run_nutrition_case.py          # Practical meal optimization case
 ├── run_benchmarks.py              # Comparison between evaluation modes
 ├── run_grid_search.py             # Hyperparameter sweep for w, c1 and c2
 ├── run_best_configs_comparison.py # Re-runs the best configurations found
@@ -67,6 +69,8 @@ ParticleSwarmOptimization/
 ## What each executable provides
 
 `run_pso.py` is the minimum execution. It is used to quickly check that the algorithm converges, that the history is saved correctly, and that the basic pipeline is healthy. It now accepts `--mode`, so the same entrypoint can run `sequential`, `threading`, `multiprocessing`, `asyncio`, or `vectorized`.
+
+`run_nutrition_case.py` adds a practical meal optimization case on top of the same PSO core. Each dimension represents one food, each particle represents a candidate meal in grams, and the fitness minimizes weighted relative error against target `kcal`, `protein`, `carbs`, and `fat`.
 
 `run_benchmarks.py` is the most direct experiment to compare evaluation modes while keeping everything else fixed. The important thing here is not to search for the best configuration, but to isolate the evaluator cost.
 
@@ -111,6 +115,70 @@ Useful examples:
 python run_pso.py --objective sphere --dimension 2 --mode vectorized --seed 42
 python run_benchmarks.py --modes vectorized --dimensions 2 10 30 --objectives sphere rastrigin --seeds 0 1
 python run_grid_search.py --mode vectorized --dimensions 2 --objectives sphere --seeds 0 1
+```
+
+## Practical case: nutrition optimization
+
+The nutrition case keeps the same modular design as the benchmark objectives. The optimizer is still the existing PSO core, and the selected evaluator still decides how fitness is computed: `sequential`, `threading`, `multiprocessing`, `asyncio`, or `vectorized`.
+
+The practical case now supports four scenarios:
+
+- `simple_meal`: one meal with the original compact catalog
+- `complex_meal`: one meal with an expanded internal catalog of 30+ foods
+- `full_day`: a full day split into `breakfast`, `lunch`, `snack`, and `dinner`
+- `full_day_constrained`: the same full day, but with extra constraints on fiber, sugar, salt, cost, and meal-level calorie distribution
+
+Here it is important to distinguish particles from dimensions:
+
+- A particle is always one candidate solution in grams.
+- In `simple_meal` and `complex_meal`, each dimension represents one food.
+- In `full_day` and `full_day_constrained`, each dimension represents one food in one meal slot.
+
+So if a day plan uses 30 foods and 4 meals, the real optimization dimension is `30 x 4 = 120`.
+
+The `--dimensions` argument controls how many foods enter the problem before expanding across meals. For example, `--dimensions 5 10` means:
+
+- for one-meal scenarios: 5 foods and 10 foods
+- for day scenarios: `5 x 4 = 20` and `10 x 4 = 40` decision variables
+
+The fitness is no longer only a macro match. It is a weighted sum of interpretable components:
+
+- `macro_error`: weighted relative error over `kcal`, `protein`, `carbs`, and `fat`
+- `fiber_penalty`: penalty for failing to reach a minimum fiber target
+- `sugar_penalty`: penalty for exceeding the sugar limit
+- `salt_penalty`: penalty for exceeding the salt limit
+- `cost_penalty`: penalty for exceeding the cost limit
+- `active_penalty`: penalty for using too many active foods per meal
+- `tiny_penalty`: penalty for unrealistic tiny quantities
+- `meal_distribution_penalty`: penalty for meals whose calories fall outside their target ranges
+
+Because of that, a fitness like `0.05` does not necessarily mean an exact `5%` macro error. It is the sum of weighted macro deviations plus whichever penalties were activated.
+
+Results are stored per scenario, evaluator family, and real problem dimension:
+
+- `results/nutrition/simple_meal/v0_sequential/dim_10/result_seed_42.json`
+- `results/nutrition/complex_meal/v4_vectorized/dim_30/result_seed_42.json`
+- `results/nutrition/full_day_constrained/v4_vectorized/dim_120/result_seed_42.json`
+
+A global roll-up is also saved to `results/nutrition/global_summary.json`.
+
+The terminal output is meant to be readable as a practical case, not just as a benchmark. It shows:
+
+- optimized quantities per food, grouped by meal when needed
+- obtained macros versus target macros
+- active constraints and penalties
+- fitness components for each run
+- V0-V4 comparative summaries by mode, by scenario, and globally
+
+V4 `vectorized` is especially suitable here because the whole swarm can be evaluated through batch NumPy operations such as `positions @ nutrition_matrix`, which avoids much of the Python loop overhead.
+
+Useful examples:
+
+```bash
+python run_nutrition_case.py
+python run_nutrition_case.py --modes vectorized --scenarios simple_meal --seeds 42 --particles 300 --iterations 800
+python run_nutrition_case.py --modes all --scenarios simple_meal complex_meal --seeds 0 1 --particles 500 --iterations 800
+python run_nutrition_case.py --modes vectorized --scenarios full_day_constrained --seeds 42 --particles 1000 --iterations 1500
 ```
 
 ## Results obtained

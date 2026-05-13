@@ -5,7 +5,7 @@ from time import perf_counter
 
 from pso_lab.core.config import PSOConfig
 from pso_lab.core.optimizer import PSOOptimizer
-from pso_lab.objectives import build_objective
+from pso_lab.objectives import ObjectiveFunction, build_objective
 from pso_lab.parallel.async_evaluator import AsyncEvaluator
 from pso_lab.parallel.evaluators import (
     FitnessEvaluator,
@@ -31,6 +31,67 @@ class ExperimentResult:
     timing_stats: dict
     config: dict
     swarm_position_history: list[list[list[float]]] | None = None
+
+
+def _run_experiment(
+    objective: ObjectiveFunction,
+    config: PSOConfig,
+    evaluation_mode: str = "sequential",
+    max_workers: int | None = None,
+    batch_size: int | None = None,
+    async_min_delay: float = 0.0,
+    async_max_delay: float = 0.0,
+    async_seed: int | None = None,
+) -> ExperimentResult:
+    if objective.dimensions != config.dimensions:
+        raise ValueError(
+            "Objective dimensions do not match the PSO configuration: "
+            f"{objective.dimensions} != {config.dimensions}"
+        )
+    if len(objective.bounds) != config.dimensions:
+        raise ValueError(
+            "Objective bounds length does not match the PSO configuration: "
+            f"{len(objective.bounds)} != {config.dimensions}"
+        )
+
+    evaluator = build_evaluator(
+        mode=evaluation_mode,
+        max_workers=max_workers,
+        batch_size=batch_size,
+        async_min_delay=async_min_delay,
+        async_max_delay=async_max_delay,
+        async_seed=config.seed if async_seed is None else async_seed,
+    )
+
+    try:
+        optimizer = PSOOptimizer(
+            config=config,
+            objective_function=objective,
+            evaluator=evaluator,
+        )
+        start = perf_counter()
+        optimization_result = optimizer.optimize()
+        elapsed_time_s = perf_counter() - start
+    finally:
+        evaluator.shutdown()
+
+    return ExperimentResult(
+        objective_name=objective.name,
+        evaluation_mode=evaluation_mode,
+        seed=config.seed,
+        best_position=optimization_result.best_position.tolist(),
+        best_value=float(optimization_result.best_value),
+        iterations_completed=optimization_result.iterations_completed,
+        elapsed_time_s=elapsed_time_s,
+        best_value_history=optimization_result.best_value_history,
+        timing_stats=asdict(optimization_result.timing_stats),
+        config=asdict(config),
+        swarm_position_history=(
+            [positions.tolist() for positions in optimization_result.swarm_position_history]
+            if optimization_result.swarm_position_history is not None
+            else None
+        ),
+    )
 
 
 def build_evaluator(
@@ -75,41 +136,38 @@ def run_single_experiment(
     """Run a single PSO experiment and returns its results."""
 
     objective = build_objective(objective_name, dimensions=config.dimensions)
-    evaluator = build_evaluator(
-        mode=evaluation_mode,
+
+    return _run_experiment(
+        objective=objective,
+        config=config,
+        evaluation_mode=evaluation_mode,
         max_workers=max_workers,
         batch_size=batch_size,
         async_min_delay=async_min_delay,
         async_max_delay=async_max_delay,
-        async_seed=config.seed if async_seed is None else async_seed,
+        async_seed=async_seed,
     )
 
-    try:
-        optimizer = PSOOptimizer(
-            config=config,
-            objective_function=objective,
-            evaluator=evaluator,
-        )
-        start = perf_counter()
-        optimization_result = optimizer.optimize()
-        elapsed_time_s = perf_counter() - start
-    finally:
-        evaluator.shutdown()
 
-    return ExperimentResult(
-        objective_name=objective.name,
+def run_objective_experiment(
+    objective: ObjectiveFunction,
+    config: PSOConfig,
+    evaluation_mode: str = "sequential",
+    max_workers: int | None = None,
+    batch_size: int | None = None,
+    async_min_delay: float = 0.0,
+    async_max_delay: float = 0.0,
+    async_seed: int | None = None,
+) -> ExperimentResult:
+    """Run a single PSO experiment for an already-built objective."""
+
+    return _run_experiment(
+        objective=objective,
+        config=config,
         evaluation_mode=evaluation_mode,
-        seed=config.seed,
-        best_position=optimization_result.best_position.tolist(),
-        best_value=float(optimization_result.best_value),
-        iterations_completed=optimization_result.iterations_completed,
-        elapsed_time_s=elapsed_time_s,
-        best_value_history=optimization_result.best_value_history,
-        timing_stats=asdict(optimization_result.timing_stats),
-        config=asdict(config),
-        swarm_position_history=(
-            [positions.tolist() for positions in optimization_result.swarm_position_history]
-            if optimization_result.swarm_position_history is not None
-            else None
-        ),
+        max_workers=max_workers,
+        batch_size=batch_size,
+        async_min_delay=async_min_delay,
+        async_max_delay=async_max_delay,
+        async_seed=async_seed,
     )

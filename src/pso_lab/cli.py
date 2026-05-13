@@ -11,6 +11,13 @@ EVALUATION_MODE_CHOICES = (
     "asyncio",
     "vectorized",
 )
+NUTRITION_MODE_CHOICES = EVALUATION_MODE_CHOICES + ("all",)
+NUTRITION_SCENARIO_CHOICES = (
+    "simple_meal",
+    "complex_meal",
+    "full_day",
+    "full_day_constrained",
+)
 GRID_SEARCH_MODE_CHOICES = (
     "all",
     "v0",
@@ -52,6 +59,8 @@ DEFAULT_VISUALIZATION_METHODS = VISUALIZATION_METHOD_CHOICES
 DEFAULT_VISUALIZATION_DIMENSION = 3
 DEFAULT_VISUALIZATION_SEED = 42
 DEFAULT_SINGLE_RUN_OUTPUT_PATH = "results/sphere_run.json"
+DEFAULT_NUTRITION_CASE_OUTPUT_PATH = "results/nutrition_case_result.json"
+DEFAULT_NUTRITION_RESULTS_DIR = "results/nutrition"
 DEFAULT_ANALYSIS_RESULTS_DIR = "results"
 DEFAULT_ANALYSIS_PLOTS_DIR = "reports/plots"
 DEFAULT_RESULTS_DIR = "results/visualization"
@@ -400,6 +409,186 @@ def build_single_run_parser() -> argparse.ArgumentParser:
 
 def parse_single_run_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return build_single_run_parser().parse_args(argv)
+
+
+def build_nutrition_case_parser() -> argparse.ArgumentParser:
+    parser = _build_parser("Run the nutrition meal optimization case with PSO.")
+    _add_mode_argument(
+        parser,
+        default="vectorized",
+        choices=NUTRITION_MODE_CHOICES,
+        help_text="Evaluation mode for the nutrition case. Use 'all' to compare every mode.",
+    )
+    parser.add_argument(
+        "--modes",
+        nargs="+",
+        default=None,
+        choices=NUTRITION_MODE_CHOICES,
+        help=(
+            "One or more evaluation modes for the nutrition case. "
+            "Use 'all' to compare every mode."
+        ),
+    )
+    parser.add_argument(
+        "--scenario",
+        default="simple_meal",
+        choices=NUTRITION_SCENARIO_CHOICES,
+        help="Nutrition scenario to optimize.",
+    )
+    parser.add_argument(
+        "--scenarios",
+        nargs="+",
+        default=None,
+        choices=NUTRITION_SCENARIO_CHOICES,
+        help="One or more nutrition scenarios to optimize.",
+    )
+    _add_seed_argument(
+        parser,
+        help_text="Random seed used for the run.",
+    )
+    parser.add_argument(
+        "--seeds",
+        nargs="+",
+        type=int,
+        default=None,
+        help="One or more random seeds used for repeated nutrition runs.",
+    )
+    parser.add_argument(
+        "--dimensions",
+        "--dimension",
+        nargs="+",
+        type=int,
+        default=[10],
+        help=(
+            "One or more nutrition case dimensions. "
+            "Each dimension uses the first N foods from the selected food list."
+        ),
+    )
+    _add_particles_argument(parser, help_text="Number of particles in the swarm.")
+    _add_iterations_argument(parser, help_text="Maximum number of PSO iterations.")
+    _add_inertia_argument(parser, help_text="Inertia weight (w).")
+    _add_c1_argument(parser, help_text="Cognitive coefficient (c1).")
+    _add_c2_argument(parser, help_text="Social coefficient (c2).")
+    _add_tolerance_argument(
+        parser,
+        default=0.0,
+        help_text="Stopping tolerance for the best fitness value.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default=DEFAULT_NUTRITION_RESULTS_DIR,
+        help="Base directory where nutrition case results will be stored.",
+    )
+    _add_output_path_argument(
+        parser,
+        default=None,
+        help_text=(
+            "Optional compatibility JSON file for a consolidated nutrition case result."
+        ),
+    )
+    parser.add_argument(
+        "--foods-path",
+        default=None,
+        help="Optional JSON file with the foods list.",
+    )
+    parser.add_argument(
+        "--targets-path",
+        default=None,
+        help="Optional JSON file with the macro targets.",
+    )
+    parser.add_argument(
+        "--max-active-foods",
+        type=int,
+        default=5,
+        help="Maximum number of active foods before applying a penalty.",
+    )
+    parser.add_argument(
+        "--active-threshold-g",
+        "--active-threshold",
+        type=float,
+        default=5.0,
+        help="Minimum quantity in grams for a food to count as active.",
+    )
+    parser.add_argument(
+        "--tiny-threshold",
+        type=float,
+        default=None,
+        help=(
+            "Minimum quantity in grams considered unrealistic and penalized as a tiny "
+            "residual amount. Defaults to the active threshold when omitted."
+        ),
+    )
+    parser.add_argument(
+        "--active-penalty-weight",
+        type=float,
+        default=0.10,
+        help="Penalty weight applied for each active food above the limit.",
+    )
+    parser.add_argument(
+        "--tiny-penalty-weight",
+        type=float,
+        default=0.05,
+        help="Penalty weight for each residual quantity below the active threshold.",
+    )
+    parser.add_argument(
+        "--fiber-penalty-weight",
+        type=float,
+        default=1.0,
+        help="Penalty weight applied when the fiber minimum is not reached.",
+    )
+    parser.add_argument(
+        "--sugar-penalty-weight",
+        type=float,
+        default=1.0,
+        help="Penalty weight applied when the sugar maximum is exceeded.",
+    )
+    parser.add_argument(
+        "--salt-penalty-weight",
+        type=float,
+        default=1.0,
+        help="Penalty weight applied when the salt maximum is exceeded.",
+    )
+    parser.add_argument(
+        "--cost-penalty-weight",
+        type=float,
+        default=1.0,
+        help="Penalty weight applied when the cost maximum is exceeded.",
+    )
+    parser.add_argument(
+        "--meal-distribution-penalty-weight",
+        type=float,
+        default=1.0,
+        help="Penalty weight applied when meal calories fall outside their target ranges.",
+    )
+    _add_max_workers_argument(
+        parser,
+        flags=("--max_workers", "--max-workers"),
+        help_text="Maximum workers for threading and multiprocessing evaluators.",
+    )
+    _add_batch_size_argument(
+        parser,
+        flags=("--batch_size", "--batch-size"),
+        help_text="Batch size for the multiprocessing evaluator.",
+    )
+    _add_async_delay_arguments(parser)
+    parser.add_argument(
+        "--show-all-foods",
+        action="store_true",
+        help="Print every food in the optimized meal table, even if it is not active.",
+    )
+    parser.add_argument(
+        "--show-meals-in-all",
+        action="store_true",
+        help=(
+            "Force printing optimized meals, obtained macros and fitness components "
+            "for every execution when --mode all is used."
+        ),
+    )
+    return parser
+
+
+def parse_nutrition_case_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    return build_nutrition_case_parser().parse_args(argv)
 
 
 def build_benchmarks_parser() -> argparse.ArgumentParser:

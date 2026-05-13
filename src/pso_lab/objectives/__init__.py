@@ -8,9 +8,11 @@ from .benchmarks import (
     SphereObjective,
     build_objective,
 )
+from .nutrition import NutritionObjective
 
 __all__ = [
     "AckleyObjective",
+    "NutritionObjective",
     "ObjectiveFunction",
     "RastriginObjective",
     "RosenbrockObjective",
