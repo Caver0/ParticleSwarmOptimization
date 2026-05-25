@@ -1442,16 +1442,13 @@ def main(argv: Sequence[str] | None = None) -> None:
 
 
 if __name__ == "__main__":
-    # Default run profile used when the script is launched without CLI arguments.
-    # This makes the VS Code "Run Python File" button behave like the curated
-    # multi-scenario benchmark profile below.
     default_argv = [
         "--modes", "all",
         "--scenarios", "simple_meal", "complex_meal", "full_day_constrained",
         "--dimensions", "10",
         "--seeds", "0", "1", "2",
         "--particles", "800",
-        "--iterations", "400",
+        "--iterations", "200",
         "--inertia", "0.7",
         "--c1", "1.5",
         "--c2", "1.5",
